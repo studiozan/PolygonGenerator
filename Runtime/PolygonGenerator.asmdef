@@ -1,3 +1,15 @@
-﻿{
-	"name": "PolygonGenerator"
+{
+    "name": "PolygonGenerator",
+    "references": [
+        "GUID:e2f3fe831b05e7e48b2e6f5363a29d9b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
