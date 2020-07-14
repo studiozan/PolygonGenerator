@@ -18,12 +18,22 @@ namespace PolygonGenerator
 			int i0, i1, i2, i3, count;
 			FieldConnectPoint tmp_point;
 			Vector3[] vec_tbl = new Vector3[ 3];
-			Vector3 tmp_vec;
+			Vector3 tmp_vec, sub_vec, center_vec, min, max;
 			Vector2 tmp_uv = Vector2.zero;
 			MeshCreator mesh_script;
-			float tmp_f;
+			float tmp_f, size;
 			List<Vector3> vec_list = new List<Vector3>();
 			List<Vector2> uv_list = new List<Vector2>();
+			List<int> tri_list = new List<int>();
+			List<Color32> color_list = new List<Color32>();
+			Color32 tmp_color = new Color32(255,255,255,0);
+			byte tmp_b;
+			size = 50f;
+			size = size * size;
+			min = Vector3.zero;
+			max = Vector3.zero;
+			min.x = float.MaxValue;
+			min.z = float.MaxValue;
 
 			for( i0 = 0; i0 < point_list.Count; i0++)
 			{
@@ -70,12 +80,36 @@ namespace PolygonGenerator
 				}
 			}
 
+			System.Random SystemRandom = new System.Random();
+			center_vec = new Vector3(0,0,0);
+			center_vec.x = (float)SystemRandom.NextDouble() * 100f + 100f;
+			center_vec.z = (float)SystemRandom.NextDouble() * 100f + 100f;
 			if( CreateObj != null)
 			{
 				GameObject obj;
+				for( i0 = 0; i0 < vec_list.Count; i0++)
+				{
+					tri_list.Add( i0);
+				}
+				for( i0 = 0; i0 < vec_list.Count; i0++)
+				{
+					sub_vec = center_vec - vec_list[ i0];
+					tmp_f = sub_vec.x * sub_vec.x + sub_vec.z * sub_vec.z;
+					if( tmp_f > size)
+					{
+						tmp_f = 0;
+					}
+					else
+					{
+						tmp_f = (1f - (tmp_f / size)) * 255f;
+					}
+					tmp_b = (byte)tmp_f;
+					tmp_color.a = tmp_b;
+					color_list.Add( tmp_color);
+				}
 				obj = Object.Instantiate( CreateObj) as GameObject;
 				mesh_script = obj.GetComponent<MeshCreator>();
-				mesh_script.PolygonCreate( vec_list, uv_list);
+				mesh_script.PolygonCreate( vec_list, tri_list, uv_list, color_list);
 			}
 		}
 
@@ -85,7 +119,7 @@ namespace PolygonGenerator
 		 * pos1からpos2のベクトルと、pos1からpos3のベクトルで外積を求めている
 		 * Yの値しか必要ないので、Y値だけ計算して返すようにしている
 		 */
-		float CrossY( Vector3 pos1, Vector3 pos2, Vector3 pos3)
+		public static float CrossY( Vector3 pos1, Vector3 pos2, Vector3 pos3)
 		{
 			Vector3 vec1, vec2;
 			float ret = 0f;
