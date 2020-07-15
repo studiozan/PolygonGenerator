@@ -70,6 +70,7 @@ namespace PolygonGenerator
 		{
 			var mesh = new Mesh();
 
+			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;	/*! 頂点数の制限をなくした状態 */
 			mesh.SetVertices( vec_list);
 			mesh.SetTriangles( tri_list, 0);
 			mesh.SetUVs( 0, uv_list);

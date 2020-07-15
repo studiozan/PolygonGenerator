@@ -44,9 +44,9 @@ namespace PolygonGenerator
 				{
 					continue;
 				}
-				for( i1 = 0; i1 < count - 1; i1++)
+				for( i1 = 0; i1 < count; i1++)
 				{
-					for( i2 = i1 + 1; i2 < count; i2++)
+					for( i2 = i1 + 1; i2 < count + 1; i2++)
 					{
 						if( i1 == i2)
 						{
@@ -59,7 +59,7 @@ namespace PolygonGenerator
 						vec_tbl[ 0] = new Vector3( tmp_point.Position.x, tmp_point.Position.y, tmp_point.Position.z);
 						tmp_vec = tmp_point.ConnectionList[ i1].Position;
 						vec_tbl[ 1] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
-						tmp_vec = tmp_point.ConnectionList[ i2].Position;
+						tmp_vec = tmp_point.ConnectionList[ (i2 % count)].Position;
 						vec_tbl[ 2] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
 						tmp_f = CrossY( vec_tbl[ 0], vec_tbl[ 1], vec_tbl[ 2]);
 						if( tmp_f < 0)
@@ -76,14 +76,29 @@ namespace PolygonGenerator
 							tmp_uv.y = vec_tbl[ i3].z * 0.01f;
 							uv_list.Add( tmp_uv);
 						}
+						/*! 対面のテクスチャも作る設定 */
+						tmp_vec = vec_tbl[ 1] - vec_tbl[ 0];
+						vec_tbl[ 0] = vec_tbl[ 2] + tmp_vec;
+						tmp_vec = vec_tbl[ 1];
+						vec_tbl[ 1] = vec_tbl[ 2];
+						vec_tbl[ 2] = tmp_vec;
+						for( i3 = 0; i3 < vec_tbl.Length; i3++)
+						{
+							vec_tbl[ i3].y = ofset_y;
+							vec_list.Add( vec_tbl[ i3]);
+							tmp_uv.x = vec_tbl[ i3].x * 0.01f;
+							tmp_uv.y = vec_tbl[ i3].z * 0.01f;
+							uv_list.Add( tmp_uv);
+						}
 					}
 				}
 			}
 
+			/*! 重ねて表示するテクスチャの座標をランダムに出す */
 			System.Random SystemRandom = new System.Random();
 			center_vec = new Vector3(0,0,0);
-			center_vec.x = (float)SystemRandom.NextDouble() * 100f + 100f;
-			center_vec.z = (float)SystemRandom.NextDouble() * 100f + 100f;
+			center_vec.x = (float)SystemRandom.NextDouble() * 300f + 100f;
+			center_vec.z = (float)SystemRandom.NextDouble() * 300f + 100f;
 			if( CreateObj != null)
 			{
 				GameObject obj;
@@ -101,7 +116,8 @@ namespace PolygonGenerator
 					}
 					else
 					{
-						tmp_f = (1f - (tmp_f / size)) * 255f;
+						tmp_f = (1f - (tmp_f / (size*0.8f))) * 255f;
+						tmp_f = 255f;
 					}
 					tmp_b = (byte)tmp_f;
 					tmp_color.a = tmp_b;
