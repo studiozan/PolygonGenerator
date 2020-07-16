@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using FieldGenerator;
 
-namespace FieldGenerator
+namespace PolygonGenerator
 {
 	public class LinePolygonCreator
 	{
@@ -12,7 +13,7 @@ namespace FieldGenerator
 			meshFilter = gameObject?.GetComponent<MeshFilter>();
 		}
 
-		public void CreatePolygon(List<FieldConnectPoint> points, float width)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
 		{
 			if (meshFilter != null)
 			{
@@ -20,6 +21,8 @@ namespace FieldGenerator
 				CreateVerticesAndIndices(points, width);
 				meshFilter.sharedMesh = CreateMesh();
 			}
+
+			yield return null;
 		}
 
 		Mesh CreateMesh()
