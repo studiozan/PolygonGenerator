@@ -13,12 +13,12 @@ namespace PolygonGenerator
 		 * @param point_list	ポリゴン作成情報に使用する繋がりポイントのリスト
 		 * @param ofset_y		ポリゴン作成時のYの高さ
 		 */
-		public void PolygonCreate( List<FieldConnectPoint> point_list, float ofset_y = -0.1f)
+		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldConnectPoint> point_list, float ofset_y = -0.1f)
 		{
 			int i0, i1, i2, i3, count;
 			FieldConnectPoint tmp_point;
 			Vector3[] vec_tbl = new Vector3[ 3];
-			Vector3 tmp_vec, sub_vec, center_vec, min, max;
+			Vector3 tmp_vec, center_vec, min, max;
 			Vector2 tmp_uv = Vector2.zero;
 			MeshCreator mesh_script;
 			float tmp_f, size;
@@ -27,7 +27,6 @@ namespace PolygonGenerator
 			List<int> tri_list = new List<int>();
 			List<Color32> color_list = new List<Color32>();
 			Color32 tmp_color = new Color32(255,255,255,0);
-			byte tmp_b;
 			size = 50f;
 			size = size * size;
 			min = Vector3.zero;
@@ -35,6 +34,10 @@ namespace PolygonGenerator
 			min.x = float.MaxValue;
 			min.z = float.MaxValue;
 
+			min.x = 0f;
+			min.z = 0f;
+			max.x = 750f;
+			max.z = 750f;
 			for( i0 = 0; i0 < point_list.Count; i0++)
 			{
 				tmp_point = point_list[ i0];
@@ -70,6 +73,7 @@ namespace PolygonGenerator
 						}
 						for( i3 = 0; i3 < vec_tbl.Length; i3++)
 						{
+							MinMaxCheck( ref vec_tbl[ i3], min, max);
 							vec_tbl[ i3].y = ofset_y;
 							vec_list.Add( vec_tbl[ i3]);
 							tmp_uv.x = vec_tbl[ i3].x * 0.01f;
@@ -84,6 +88,7 @@ namespace PolygonGenerator
 						vec_tbl[ 2] = tmp_vec;
 						for( i3 = 0; i3 < vec_tbl.Length; i3++)
 						{
+							MinMaxCheck( ref vec_tbl[ i3], min, max);
 							vec_tbl[ i3].y = ofset_y;
 							vec_list.Add( vec_tbl[ i3]);
 							tmp_uv.x = vec_tbl[ i3].x * 0.01f;
@@ -98,14 +103,20 @@ namespace PolygonGenerator
 			System.Random SystemRandom = new System.Random();
 			center_vec = new Vector3(0,0,0);
 			center_vec.x = (float)SystemRandom.NextDouble() * 300f + 100f;
-			center_vec.z = (float)SystemRandom.NextDouble() * 300f + 100f;
-			if( CreateObj != null)
+			center_vec.z = (float)SystemRandom.NextDouble() * 300f + 300f;
+			if( createObj != null)
 			{
 				GameObject obj;
 				for( i0 = 0; i0 < vec_list.Count; i0++)
 				{
 					tri_list.Add( i0);
 				}
+#if false
+				/*! 特定の座標周りだけテクスチャを上乗せする処理。
+					頂点カラーの設定が上手くいっていないので、重なってるポリゴンの部分で上乗せ具合が違っててチラつく
+				 */
+				byte tmp_b;
+				Vector3 sub_vec;
 				for( i0 = 0; i0 < vec_list.Count; i0++)
 				{
 					sub_vec = center_vec - vec_list[ i0];
@@ -116,16 +127,71 @@ namespace PolygonGenerator
 					}
 					else
 					{
-						tmp_f = (1f - (tmp_f / (size*0.8f))) * 255f;
-						tmp_f = 255f;
+						tmp_f = (1f - (tmp_f / size)) * 255f;
 					}
 					tmp_b = (byte)tmp_f;
 					tmp_color.a = tmp_b;
 					color_list.Add( tmp_color);
 				}
-				obj = Object.Instantiate( CreateObj) as GameObject;
+#endif
+#if true
+				byte tmp_b;
+				for( i0 = 0; i0 < vec_list.Count; i0++)
+				{
+					tmp_f = vec_list[ i0].z;
+					if( tmp_f < center_vec.z)
+					{
+						tmp_b = 0;
+					}
+					else
+					{
+						tmp_f = (tmp_f - center_vec.z) * 0.01f;
+						if( tmp_f > 1f)
+						{
+							tmp_f = 1f;
+						}
+						tmp_b = (byte)(tmp_f * 255.1f);
+					}
+					tmp_color.a = tmp_b;
+					color_list.Add( tmp_color);
+				}
+#endif
+#if false
+				/*! 特に何もしない頂点カラーの設定 */
+				for( i0 = 0; i0 < vec_list.Count; i0++)
+				{
+					color_list.Add( tmp_color);
+				}
+#endif
+				obj = Object.Instantiate( createObj) as GameObject;
+				obj.transform.parent = parent;
 				mesh_script = obj.GetComponent<MeshCreator>();
 				mesh_script.PolygonCreate( vec_list, tri_list, uv_list, color_list);
+			}
+
+			yield return 0;
+		}
+
+		/**
+		 * 渡された座標が最低値、最大値を超えていないか調べて、超えている場合は補正する
+		 */
+		void MinMaxCheck( ref Vector3 vec, Vector3 min, Vector3 max)
+		{
+			if( min.x > vec.x)
+			{
+				vec.x = min.x;
+			}
+			else if( max.x < vec.x)
+			{
+				vec.x = max.x;
+			}
+			if( min.z > vec.z)
+			{
+				vec.z = min.z;
+			}
+			else if( max.z < vec.z)
+			{
+				vec.z = max.z;
 			}
 		}
 
@@ -152,9 +218,9 @@ namespace PolygonGenerator
 
 		public void SetObject( GameObject obj)
 		{
-			CreateObj = obj;
+			createObj = obj;
 		}
 
-		GameObject CreateObj;		/*! 生成するMeshCreatorが付いているオブジェクト */
+		GameObject createObj;		/*! 生成するMeshCreatorが付いているオブジェクト */
 	}
 }
