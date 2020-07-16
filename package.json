@@ -6,5 +6,8 @@
   "keywords": [
     "texture"
   ],
-  "description": "Polygon Generator"
+  "description": "Polygon Generator",
+  "dependencies": {
+    "com.studiozan.fieldgenerator" : "https://github.com/studiozan/FieldGenerator.git"
+  }
 }
