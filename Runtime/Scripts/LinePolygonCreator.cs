@@ -13,7 +13,7 @@ namespace PolygonGenerator
 			meshFilter = gameObject?.GetComponent<MeshFilter>();
 		}
 
-		public void CreatePolygon(List<FieldConnectPoint> points, float width)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
 		{
 			if (meshFilter != null)
 			{
@@ -21,6 +21,8 @@ namespace PolygonGenerator
 				CreateVerticesAndIndices(points, width);
 				meshFilter.sharedMesh = CreateMesh();
 			}
+
+			yield return null;
 		}
 
 		Mesh CreateMesh()
