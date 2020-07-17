@@ -23,7 +23,7 @@ namespace PolygonGenerator
 				meshFilter.sharedMesh = CreateMesh();
 			}
 
-			yield return null;
+			yield break;
 		}
 
 		Mesh CreateMesh()
