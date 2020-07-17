@@ -18,16 +18,16 @@ namespace PolygonGenerator
 		{
 			int i0, i1, i2, i3, count;
 			FieldConnectPoint tmp_point;
-			Vector3[] vec_tbl = new Vector3[ 3];
+			var vec_tbl = new Vector3[ 3];
 			Vector3 tmp_vec, center_vec, min, max;
 			Vector2 tmp_uv = Vector2.zero;
 			MeshCreator mesh_script;
 			float tmp_f, size;
-			List<Vector3> vec_list = new List<Vector3>();
-			List<Vector2> uv_list = new List<Vector2>();
-			List<int> tri_list = new List<int>();
-			List<Color32> color_list = new List<Color32>();
-			Color32 tmp_color = new Color32(255,255,255,0);
+			var vec_list = new List<Vector3>();
+			var uv_list = new List<Vector2>();
+			var tri_list = new List<int>();
+			var color_list = new List<Color32>();
+			var tmp_color = new Color32(255,255,255,0);
 			size = 50f;
 			size = size * size;
 			min = Vector3.zero;
@@ -101,7 +101,7 @@ namespace PolygonGenerator
 			}
 
 			/*! 重ねて表示するテクスチャの座標をランダムに出す */
-			System.Random SystemRandom = new System.Random();
+			var SystemRandom = new System.Random();
 			center_vec = new Vector3(0,0,0);
 			center_vec.x = (float)SystemRandom.NextDouble() * 300f + 100f;
 			center_vec.z = (float)SystemRandom.NextDouble() * 300f + 300f;
@@ -170,7 +170,7 @@ namespace PolygonGenerator
 				mesh_script.PolygonCreate( vec_list, tri_list, uv_list, color_list);
 			}
 
-			yield return 0;
+			yield break;
 		}
 
 		/**

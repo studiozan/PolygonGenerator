@@ -17,20 +17,18 @@ namespace PolygonGenerator
 		public void PolygonCreate( List<Vector3> vec_list, List<Vector2> uv_list)
 		{
 			int i0;
-			List<int> tri_list = new List<int>();
-			List<Color32> color_list = new List<Color32>();
-			Color32 tmp_color;
+			var tri_list = new List<int>();
+			var color_list = new List<Color32>();
+			var tmp_color = new Color32(255,255,255,0);;
 
 			/*! 頂点情報 */
-			for( i0 = 0; i0 < vec_list.Count; i0++)
+			for( i0 = 0; i0 < vec_list.Count; ++i0)
 			{
 				tri_list.Add( i0);
 			}
 
-			for( i0 = 0; i0 < vec_list.Count; i0++)
+			for( i0 = 0; i0 < vec_list.Count; ++i0)
 			{
-				//tmp_color = new Color32(255,255,255,100);
-				tmp_color = new Color32(255,255,255,0);
 				color_list.Add(tmp_color);
 			}
 
@@ -40,25 +38,25 @@ namespace PolygonGenerator
 		public void PolygonCreate( List<Vector3> vec_list)
 		{
 			int i0;
-			List<int> tri_list = new List<int>();
-			List<Vector2> uv_list = new List<Vector2>();
+			var tri_list = new List<int>();
+			var uv_list = new List<Vector2>();
 			Vector2 tmp_uv = Vector2.zero;
-			List<Color32> color_list = new List<Color32>();
-			Color32 tmp_color = new Color32(255,255,255,255);
+			var color_list = new List<Color32>();
+			var tmp_color = new Color32(255,255,255,255);
 
 			/*! 頂点情報 */
-			for( i0 = 0; i0 < vec_list.Count; i0++)
+			for( i0 = 0; i0 < vec_list.Count; ++i0)
 			{
 				tri_list.Add( i0);
 			}
 
 			/*! UV情報 */
-			for( i0 = 0; i0 < vec_list.Count; i0++)
+			for( i0 = 0; i0 < vec_list.Count; ++i0)
 			{
 				uv_list.Add( tmp_uv);
 			}
 
-			for( i0 = 0; i0 < vec_list.Count; i0++)
+			for( i0 = 0; i0 < vec_list.Count; ++i0)
 			{
 				color_list.Add( tmp_color);
 			}
@@ -86,28 +84,28 @@ namespace PolygonGenerator
 		 */
 		public void BuildingPolygonCreate( List<BuildingParameter> building_list)
 		{
-			List<Vector3> vec_list = new List<Vector3>();
-			List<int> tri_list = new List<int>();
-			List<Vector2> uv_list = new List<Vector2>();
-			List<Color32> color_list = new List<Color32>();
+			var vec_list = new List<Vector3>();
+			var tri_list = new List<int>();
+			var uv_list = new List<Vector2>();
+			var color_list = new List<Color32>();
 			List<Vector2> tmp_v2_list;
-			List<Vector3> tmp_v3_list = new List<Vector3>();
+			var tmp_v3_list = new List<Vector3>();
 			BuildingParameter tmp_buil;
 			Vector3 tmp_vec;
-			Color32 tmp_color = new Color32(255,255,255,0);
+			var tmp_color = new Color32(255,255,255,0);
 			int i0, i1, i2, tmp_i, tri_count;
 			float height, height_min, itv;
 			itv = 100f;
 			tri_count = 0;
 
-			for( i0 = 0; i0 < building_list.Count; i0++)
+			for( i0 = 0; i0 < building_list.Count; ++i0)
 			{
 				tmp_buil = building_list[ i0];
 
 				height = tmp_buil.BuildingHeight;
 				tmp_v2_list = tmp_buil.GetRoofTopUV();
 				/*! 屋上のポリゴンを設定する */
-				for( i1 = 0; i1 < tmp_buil.PositionList.Count; i1++)
+				for( i1 = 0; i1 < tmp_buil.PositionList.Count; ++i1)
 				{
 					tmp_vec = tmp_buil.PositionList[ i1];
 					tmp_vec.y = height;
@@ -128,11 +126,11 @@ namespace PolygonGenerator
 					{
 						height_min = 0f;
 					}
-					for( i1 = 0; i1 < 4; i1++)
+					for( i1 = 0; i1 < 4; ++i1)
 					{
 						tmp_i = (i1 + 1) % 4;
 						tmp_v3_list.Clear();
-						for( i2 = 0; i2 < 4; i2++)
+						for( i2 = 0; i2 < 4; ++i2)
 						{
 							switch( i2)
 							{
