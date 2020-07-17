@@ -5,6 +5,7 @@ using FieldGenerator;
 
 namespace PolygonGenerator
 {
+	[System.Serializable]
 	public class MapGroundPolygonCreator
 	{
 		/**
@@ -38,7 +39,7 @@ namespace PolygonGenerator
 			min.z = 0f;
 			max.x = 750f;
 			max.z = 750f;
-			for( i0 = 0; i0 < point_list.Count; i0++)
+			for( i0 = 0; i0 < point_list.Count; ++i0)
 			{
 				tmp_point = point_list[ i0];
 				count = tmp_point.ConnectionList.Count;
@@ -47,9 +48,9 @@ namespace PolygonGenerator
 				{
 					continue;
 				}
-				for( i1 = 0; i1 < count; i1++)
+				for( i1 = 0; i1 < count; ++i1)
 				{
-					for( i2 = i1 + 1; i2 < count + 1; i2++)
+					for( i2 = i1 + 1; i2 < count + 1; ++i2)
 					{
 						if( i1 == i2)
 						{
@@ -71,7 +72,7 @@ namespace PolygonGenerator
 							vec_tbl[ 1] = vec_tbl[ 2];
 							vec_tbl[ 2] = tmp_vec;
 						}
-						for( i3 = 0; i3 < vec_tbl.Length; i3++)
+						for( i3 = 0; i3 < vec_tbl.Length; ++i3)
 						{
 							MinMaxCheck( ref vec_tbl[ i3], min, max);
 							vec_tbl[ i3].y = ofset_y;
@@ -86,7 +87,7 @@ namespace PolygonGenerator
 						tmp_vec = vec_tbl[ 1];
 						vec_tbl[ 1] = vec_tbl[ 2];
 						vec_tbl[ 2] = tmp_vec;
-						for( i3 = 0; i3 < vec_tbl.Length; i3++)
+						for( i3 = 0; i3 < vec_tbl.Length; ++i3)
 						{
 							MinMaxCheck( ref vec_tbl[ i3], min, max);
 							vec_tbl[ i3].y = ofset_y;
@@ -107,7 +108,7 @@ namespace PolygonGenerator
 			if( createObj != null)
 			{
 				GameObject obj;
-				for( i0 = 0; i0 < vec_list.Count; i0++)
+				for( i0 = 0; i0 < vec_list.Count; ++i0)
 				{
 					tri_list.Add( i0);
 				}
@@ -117,7 +118,7 @@ namespace PolygonGenerator
 				 */
 				byte tmp_b;
 				Vector3 sub_vec;
-				for( i0 = 0; i0 < vec_list.Count; i0++)
+				for( i0 = 0; i0 < vec_list.Count; ++i0)
 				{
 					sub_vec = center_vec - vec_list[ i0];
 					tmp_f = sub_vec.x * sub_vec.x + sub_vec.z * sub_vec.z;
@@ -136,7 +137,7 @@ namespace PolygonGenerator
 #endif
 #if true
 				byte tmp_b;
-				for( i0 = 0; i0 < vec_list.Count; i0++)
+				for( i0 = 0; i0 < vec_list.Count; ++i0)
 				{
 					tmp_f = vec_list[ i0].z;
 					if( tmp_f < center_vec.z)
@@ -158,7 +159,7 @@ namespace PolygonGenerator
 #endif
 #if false
 				/*! 特に何もしない頂点カラーの設定 */
-				for( i0 = 0; i0 < vec_list.Count; i0++)
+				for( i0 = 0; i0 < vec_list.Count; ++i0)
 				{
 					color_list.Add( tmp_color);
 				}
