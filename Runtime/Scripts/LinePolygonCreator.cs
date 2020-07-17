@@ -5,6 +5,7 @@ using FieldGenerator;
 
 namespace PolygonGenerator
 {
+	[System.Serializable]
 	public class LinePolygonCreator
 	{
 		public void SetObject(GameObject gameObject)
