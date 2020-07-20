@@ -5,19 +5,23 @@ using FieldGenerator;
 
 namespace PolygonGenerator
 {
-	public class BuildingCreator : MonoBehaviour
+	[System.Serializable]
+	public class BuildingCreator
 	{
-		void Awake()
+		public void Initialize(MeshCreator meshCreator)
 		{
-			meshCreator = GetComponent<MeshCreator>();
-			townGenerator.OnGenerate += CreateBuildingMesh;
-
-			random = new System.Random(0);
+			random = new System.Random();
+			this.meshCreator = meshCreator;
 		}
 
-		void CreateBuildingMesh(TownGenerator generator)
+		public void SetHeightRange(float min, float max)
 		{
-			List<SurroundedArea> areas = generator.SurroundedAreas;
+			minHeight = min;
+			maxHeight = max;
+		}
+
+		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas)
+		{
 			var parameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
 			{
@@ -40,18 +44,13 @@ namespace PolygonGenerator
 			}
 
 			meshCreator.BuildingPolygonCreate(parameters);
+
+			yield break;
 		}
 
-		[SerializeField]
-		TownGenerator townGenerator = default;
-
-		[SerializeField]
-		float minHeight = 10;
-		[SerializeField]
-		float maxHeight = 50;
-
-		MeshCreator meshCreator;
-
 		System.Random random;
+		MeshCreator meshCreator;
+		float minHeight;
+		float maxHeight;
 	}
 }
