@@ -14,12 +14,12 @@ namespace PolygonGenerator
 		 * @param point_list	ポリゴン作成情報に使用する繋がりポイントのリスト
 		 * @param ofset_y		ポリゴン作成時のYの高さ
 		 */
-		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldConnectPoint> point_list, float ofset_y = -0.1f)
+		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldConnectPoint> point_list, Vector3 min, Vector3 max, float ofset_y = -0.1f)
 		{
 			int i0, i1, i2, i3, count;
 			FieldConnectPoint tmp_point;
 			var vec_tbl = new Vector3[ 3];
-			Vector3 tmp_vec, center_vec, min, max;
+			Vector3 tmp_vec, center_vec;
 			Vector2 tmp_uv = Vector2.zero;
 			MeshCreator mesh_script;
 			float tmp_f, size;
@@ -30,15 +30,7 @@ namespace PolygonGenerator
 			var tmp_color = new Color32(255,255,255,0);
 			size = 50f;
 			size = size * size;
-			min = Vector3.zero;
-			max = Vector3.zero;
-			min.x = float.MaxValue;
-			min.z = float.MaxValue;
-
-			min.x = 0f;
-			min.z = 0f;
-			max.x = 750f;
-			max.z = 750f;
+			
 			for( i0 = 0; i0 < point_list.Count; ++i0)
 			{
 				tmp_point = point_list[ i0];
