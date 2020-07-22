@@ -80,8 +80,8 @@ namespace PolygonGenerator
 						vertices.Add(rightBase + nextPoint.Position);
 
 						uvs.Add(new Vector2(0, uvY1));
-						uvs.Add(new Vector2(1, uvY1));
 						uvs.Add(new Vector2(0, uvY2));
+						uvs.Add(new Vector2(1, uvY1));
 						uvs.Add(new Vector2(1, uvY2));
 
 						indices.Add(indexBase);
