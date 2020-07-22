@@ -26,6 +26,11 @@ namespace PolygonGenerator
 			yield break;
 		}
 
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
+		{
+			yield return CreatePolygon(points, width, 0, 1);
+		}
+
 		Mesh CreateMesh()
 		{
 			var mesh = new Mesh();
@@ -88,11 +93,6 @@ namespace PolygonGenerator
 					}
 				}
 			}
-		}
-
-		void CreateMeshParameter(List<FieldConnectPoint> points, float width)
-		{
-			CreateMeshParameter(points, width, 0, 1);
 		}
 
 		bool IsConnected(int index1, int index2)
