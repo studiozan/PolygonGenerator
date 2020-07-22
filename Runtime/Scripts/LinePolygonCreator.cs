@@ -14,22 +14,28 @@ namespace PolygonGenerator
 			meshFilter = gameObject?.GetComponent<MeshFilter>();
 		}
 
-		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			if (meshFilter != null)
 			{
 				SetPointsIndex(points);
-				CreateVerticesAndIndices(points, width);
+				CreateMeshParameter(points, width, uvY1, uvY2);
 				meshFilter.sharedMesh = CreateMesh();
 			}
 
 			yield break;
 		}
 
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
+		{
+			yield return CreatePolygon(points, width, 0, 1);
+		}
+
 		Mesh CreateMesh()
 		{
 			var mesh = new Mesh();
 			mesh.SetVertices(vertices);
+			mesh.SetUVs(0, uvs);
 			mesh.SetTriangles(indices, 0);
 
 			mesh.RecalculateNormals();
@@ -47,7 +53,7 @@ namespace PolygonGenerator
 			}
 		}
 
-		void CreateVerticesAndIndices(List<FieldConnectPoint> points, float width)
+		void CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			vertices.Clear();
 			indices.Clear();
@@ -72,6 +78,11 @@ namespace PolygonGenerator
 						vertices.Add(rightBase + point.Position);
 						vertices.Add(leftBase + nextPoint.Position);
 						vertices.Add(rightBase + nextPoint.Position);
+
+						uvs.Add(new Vector2(0, uvY1));
+						uvs.Add(new Vector2(1, uvY1));
+						uvs.Add(new Vector2(0, uvY2));
+						uvs.Add(new Vector2(1, uvY2));
 
 						indices.Add(indexBase);
 						indices.Add(indexBase + 2);
@@ -127,6 +138,7 @@ namespace PolygonGenerator
 		MeshFilter meshFilter;
 
 		List<Vector3> vertices = new List<Vector3>();
+		List<Vector2> uvs = new List<Vector2>();
 		List<int> indices = new List<int>();
 		Dictionary<int, HashSet<int>> connectedMap = new Dictionary<int, HashSet<int>>();
 	}
