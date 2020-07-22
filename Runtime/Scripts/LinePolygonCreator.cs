@@ -58,6 +58,7 @@ namespace PolygonGenerator
 			vertices.Clear();
 			indices.Clear();
 			connectedMap.Clear();
+			float halfWidth = width * 0.5f;
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point = points[i0];
@@ -69,10 +70,9 @@ namespace PolygonGenerator
 					{
 						RegisterConnectedMap(point.Index, nextPoint.Index);
 						Vector3 dir = nextPoint.Position - point.Position;
-						float angle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
-						Quaternion rotation = Quaternion.Euler(0, angle, 0);
-						Vector3 leftBase = rotation * new Vector3(-width / 2, 0, 0);
-						Vector3 rightBase = rotation * new Vector3(width / 2, 0, 0);
+						dir.Normalize();
+						var leftBase = new Vector3(dir.z * -halfWidth, 0, dir.x * halfWidth);
+						var rightBase = new Vector3(dir.z * halfWidth, 0, dir.x * -halfWidth);
 						int indexBase = vertices.Count;
 						vertices.Add(leftBase + point.Position);
 						vertices.Add(rightBase + point.Position);
@@ -80,8 +80,8 @@ namespace PolygonGenerator
 						vertices.Add(rightBase + nextPoint.Position);
 
 						uvs.Add(new Vector2(0, uvY1));
-						uvs.Add(new Vector2(1, uvY1));
 						uvs.Add(new Vector2(0, uvY2));
+						uvs.Add(new Vector2(1, uvY1));
 						uvs.Add(new Vector2(1, uvY2));
 
 						indices.Add(indexBase);
