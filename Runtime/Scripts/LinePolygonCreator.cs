@@ -56,6 +56,7 @@ namespace PolygonGenerator
 		void CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			vertices.Clear();
+			uvs.Clear();
 			indices.Clear();
 			connectedMap.Clear();
 			float halfWidth = width * 0.5f;
