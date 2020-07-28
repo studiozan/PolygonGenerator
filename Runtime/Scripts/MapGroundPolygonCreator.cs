@@ -156,6 +156,37 @@ namespace PolygonGenerator
 					color_list.Add( tmp_color);
 				}
 #endif
+				/* マップサイズのポリゴンを生成する（地面に穴が開いているような状態で生成される事があるため、そこを塞ぐために生成する） */
+				tmp_color = new Color32(255,255,255,0);
+				int index = vec_list.Count;
+				for( i0 = 0; i0 < 4; ++i0)
+				{
+					switch( i0)
+					{
+						case 0:
+						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, max.z);
+						break;
+						case 1:
+						tmp_vec = new Vector3(max.x, ofset_y - 0.1f, max.z);
+						break;
+						case 2:
+						tmp_vec = new Vector3(max.x, ofset_y - 0.1f, min.z);
+						break;
+						case 3:
+						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, min.z);
+						break;
+						default:
+						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, max.z);
+						break;
+					}
+					vec_list.Add(tmp_vec);
+					tmp_uv.x = tmp_vec.x * 0.01f;
+					tmp_uv.y = tmp_vec.z * 0.01f;
+					uv_list.Add(tmp_uv);
+					color_list.Add( tmp_color);
+				}
+				tri_list.Add( index + 0);	tri_list.Add( index + 1);	tri_list.Add( index + 2);
+				tri_list.Add( index + 2);	tri_list.Add( index + 3);	tri_list.Add( index + 0);
 				obj = Object.Instantiate( createObj) as GameObject;
 				obj.transform.parent = parent;
 				mesh_script = obj.GetComponent<MeshCreator>();
