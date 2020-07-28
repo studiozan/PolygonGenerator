@@ -8,9 +8,9 @@ namespace PolygonGenerator
 	[System.Serializable]
 	public class BuildingCreator
 	{
-		public void Initialize(MeshCreator meshCreator)
+		public void Initialize(MeshCreator meshCreator, int seed = 0)
 		{
-			random = new System.Random();
+			random = new System.Random(seed);
 			this.meshCreator = meshCreator;
 		}
 
@@ -20,7 +20,7 @@ namespace PolygonGenerator
 			maxHeight = max;
 		}
 
-		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, float areaSize, float sideRatio)
+		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, float areaSize, float sideRatio, float generationRate = 1)
 		{
 			var parameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
@@ -29,9 +29,35 @@ namespace PolygonGenerator
 				BuildingParameter.BuildingType.kBuildingB,
 				BuildingParameter.BuildingType.kBuildingC,
 			};
+
+			List<SurroundedArea> buildableAreas = DetectBuildableAreas(areas, areaSize, sideRatio);
+			int count = buildableAreas.Count;
+			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(generationRate));
+
+			for (int i0 = 0; i0 < max; ++i0)
+			{
+				int randomIndex = random.Next(count);
+				var param = new BuildingParameter(buildableAreas[randomIndex].AreaPoints);
+				param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
+				param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
+				parameters.Add(param);
+
+				--count;
+				buildableAreas[randomIndex] = buildableAreas[count];
+				buildableAreas.RemoveAt(count);
+			}
+
+			meshCreator.BuildingPolygonCreate(parameters);
+
+			yield break;
+		}
+
+		List<SurroundedArea> DetectBuildableAreas(List<SurroundedArea> areas, float areaSize, float sideRatio)
+		{
+			var buildableArea = new List<SurroundedArea>();
 			for (int i0 = 0; i0 < areas.Count; ++i0)
 			{
-				List<Vector3> points = areas[i0].AreaPoints;
+				var points = new List<Vector3>(areas[i0].AreaPoints);
 				if (points.Count == 3)
 				{
 					points.Add(points[2]);
@@ -39,16 +65,11 @@ namespace PolygonGenerator
 
 				if (CanBuildBuilding(points, areaSize, sideRatio) != false)
 				{
-					var param = new BuildingParameter(points);
-					param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
-					param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
-					parameters.Add(param);
+					buildableArea.Add(new SurroundedArea { AreaPoints = points });
 				}
 			}
 
-			meshCreator.BuildingPolygonCreate(parameters);
-
-			yield break;
+			return buildableArea;
 		}
 
 		bool CanBuildBuilding(List<Vector3> points, float areaSize, float sideRatio)
