@@ -11,30 +11,29 @@ namespace PolygonGenerator
 		/**
 		 * ポリゴン作成用の情報を生成
 		 *
-		 * @param point_list	ポリゴン作成情報に使用する繋がりポイントのリスト
-		 * @param ofset_y		ポリゴン作成時のYの高さ
+		 * @param pointList	ポリゴン作成情報に使用する繋がりポイントのリスト
+		 * @param ofsetY		ポリゴン作成時のYの高さ
 		 */
-		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldConnectPoint> point_list, Vector3 min, Vector3 max, float ofset_y = -0.1f)
+		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldConnectPoint> pointList, Vector3 min, Vector3 max, float ofsetY = -0.1f)
 		{
 			int i0, i1, i2, i3, count;
-			FieldConnectPoint tmp_point;
-			var vec_tbl = new Vector3[ 3];
-			Vector3 tmp_vec, center_vec;
-			Vector2 tmp_uv = Vector2.zero;
-			MeshCreator mesh_script;
-			float tmp_f, size;
-			var vec_list = new List<Vector3>();
-			var uv_list = new List<Vector2>();
-			var tri_list = new List<int>();
-			var color_list = new List<Color32>();
-			var tmp_color = new Color32(255,255,255,0);
+			FieldConnectPoint currentPoint;
+			var polygonTriangleVector = new Vector3[ 3];
+			Vector3 tmp_vec, subVector;
+			var addUv = Vector2.zero;
+			float alphaPower, size;
+			var vectorList = new List<Vector3>();
+			var uvList = new List<Vector2>();
+			var triangleList = new List<int>();
+			var colorList = new List<Color32>();
+			var addColor = new Color32(255,255,255,0);
 			size = 50f;
 			size = size * size;
 			
-			for( i0 = 0; i0 < point_list.Count; ++i0)
+			for( i0 = 0; i0 < pointList.Count; ++i0)
 			{
-				tmp_point = point_list[ i0];
-				count = tmp_point.ConnectionList.Count;
+				currentPoint = pointList[ i0];
+				count = currentPoint.ConnectionList.Count;
 				/*! 最低でも2点無いとポリゴンが生成出来ないので、繋がっている数が1以下なら処理しない */
 				if( count <= 1)
 				{
@@ -52,41 +51,41 @@ namespace PolygonGenerator
 						 *	これだとポリゴンが重なる部分が出てくるので、ポリゴンが重ならずに生成されるように別の処理に変更したい
 						 */
 						/*! 基準点と繋がっている2点間とのポリゴンを生成する */
-						vec_tbl[ 0] = new Vector3( tmp_point.Position.x, tmp_point.Position.y, tmp_point.Position.z);
-						tmp_vec = tmp_point.ConnectionList[ i1].Position;
-						vec_tbl[ 1] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
-						tmp_vec = tmp_point.ConnectionList[ (i2 % count)].Position;
-						vec_tbl[ 2] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
-						tmp_f = CrossY( vec_tbl[ 0], vec_tbl[ 1], vec_tbl[ 2]);
-						if( tmp_f < 0)
+						polygonTriangleVector[ 0] = new Vector3( currentPoint.Position.x, currentPoint.Position.y, currentPoint.Position.z);
+						tmp_vec = currentPoint.ConnectionList[ i1].Position;
+						polygonTriangleVector[ 1] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
+						tmp_vec = currentPoint.ConnectionList[ (i2 % count)].Position;
+						polygonTriangleVector[ 2] = new Vector3( tmp_vec.x, tmp_vec.y, tmp_vec.z);
+						float clossY = CrossY( polygonTriangleVector[ 0], polygonTriangleVector[ 1], polygonTriangleVector[ 2]);
+						if( clossY < 0)
 						{
-							tmp_vec = vec_tbl[ 1];
-							vec_tbl[ 1] = vec_tbl[ 2];
-							vec_tbl[ 2] = tmp_vec;
+							tmp_vec = polygonTriangleVector[ 1];
+							polygonTriangleVector[ 1] = polygonTriangleVector[ 2];
+							polygonTriangleVector[ 2] = tmp_vec;
 						}
-						for( i3 = 0; i3 < vec_tbl.Length; ++i3)
+						for( i3 = 0; i3 < polygonTriangleVector.Length; ++i3)
 						{
-							MinMaxCheck( ref vec_tbl[ i3], min, max);
-							vec_tbl[ i3].y = ofset_y;
-							vec_list.Add( vec_tbl[ i3]);
-							tmp_uv.x = vec_tbl[ i3].x * 0.01f;
-							tmp_uv.y = vec_tbl[ i3].z * 0.01f;
-							uv_list.Add( tmp_uv);
+							MinMaxCheck( ref polygonTriangleVector[ i3], min, max);
+							polygonTriangleVector[ i3].y = ofsetY;
+							vectorList.Add( polygonTriangleVector[ i3]);
+							addUv.x = polygonTriangleVector[ i3].x * 0.01f;
+							addUv.y = polygonTriangleVector[ i3].z * 0.01f;
+							uvList.Add( addUv);
 						}
 						/*! 対面のテクスチャも作る設定 */
-						tmp_vec = vec_tbl[ 1] - vec_tbl[ 0];
-						vec_tbl[ 0] = vec_tbl[ 2] + tmp_vec;
-						tmp_vec = vec_tbl[ 1];
-						vec_tbl[ 1] = vec_tbl[ 2];
-						vec_tbl[ 2] = tmp_vec;
-						for( i3 = 0; i3 < vec_tbl.Length; ++i3)
+						subVector = polygonTriangleVector[ 1] - polygonTriangleVector[ 0];
+						polygonTriangleVector[ 0] = polygonTriangleVector[ 2] + subVector;
+						tmp_vec = polygonTriangleVector[ 1];
+						polygonTriangleVector[ 1] = polygonTriangleVector[ 2];
+						polygonTriangleVector[ 2] = tmp_vec;
+						for( i3 = 0; i3 < polygonTriangleVector.Length; ++i3)
 						{
-							MinMaxCheck( ref vec_tbl[ i3], min, max);
-							vec_tbl[ i3].y = ofset_y;
-							vec_list.Add( vec_tbl[ i3]);
-							tmp_uv.x = vec_tbl[ i3].x * 0.01f;
-							tmp_uv.y = vec_tbl[ i3].z * 0.01f;
-							uv_list.Add( tmp_uv);
+							MinMaxCheck( ref polygonTriangleVector[ i3], min, max);
+							polygonTriangleVector[ i3].y = ofsetY;
+							vectorList.Add( polygonTriangleVector[ i3]);
+							addUv.x = polygonTriangleVector[ i3].x * 0.01f;
+							addUv.y = polygonTriangleVector[ i3].z * 0.01f;
+							uvList.Add( addUv);
 						}
 					}
 				}
@@ -94,15 +93,15 @@ namespace PolygonGenerator
 
 			/*! 重ねて表示するテクスチャの座標をランダムに出す */
 			var SystemRandom = new System.Random();
-			center_vec = new Vector3(0,0,0);
-			center_vec.x = (float)SystemRandom.NextDouble() * 300f + 100f;
-			center_vec.z = (float)SystemRandom.NextDouble() * 300f + 300f;
+			var overwritePoint = new Vector3(0,0,0);
+			overwritePoint.x = (float)SystemRandom.NextDouble() * 300f + 100f;
+			overwritePoint.z = (float)SystemRandom.NextDouble() * 300f + 300f;
 			if( createObj != null)
 			{
 				GameObject obj;
-				for( i0 = 0; i0 < vec_list.Count; ++i0)
+				for( i0 = 0; i0 < vectorList.Count; ++i0)
 				{
-					tri_list.Add( i0);
+					triangleList.Add( i0);
 				}
 #if false
 				/*! 特定の座標周りだけテクスチャを上乗せする処理。
@@ -110,87 +109,88 @@ namespace PolygonGenerator
 				 */
 				byte tmp_b;
 				Vector3 sub_vec;
-				for( i0 = 0; i0 < vec_list.Count; ++i0)
+				for( i0 = 0; i0 < vectorList.Count; ++i0)
 				{
-					sub_vec = center_vec - vec_list[ i0];
-					tmp_f = sub_vec.x * sub_vec.x + sub_vec.z * sub_vec.z;
-					if( tmp_f > size)
+					sub_vec = overwritePoint - vectorList[ i0];
+					alphaPower = sub_vec.x * sub_vec.x + sub_vec.z * sub_vec.z;
+					if( alphaPower > size)
 					{
-						tmp_f = 0;
+						alphaPower = 0;
 					}
 					else
 					{
-						tmp_f = (1f - (tmp_f / size)) * 255f;
+						alphaPower = (1f - (alphaPower / size)) * 255f;
 					}
-					tmp_b = (byte)tmp_f;
-					tmp_color.a = tmp_b;
-					color_list.Add( tmp_color);
+					tmp_b = (byte)alphaPower;
+					addColor.a = tmp_b;
+					colorList.Add( addColor);
 				}
 #endif
 #if true
 				byte tmp_b;
-				for( i0 = 0; i0 < vec_list.Count; ++i0)
+				for( i0 = 0; i0 < vectorList.Count; ++i0)
 				{
-					tmp_f = vec_list[ i0].z;
-					if( tmp_f < center_vec.z)
+					alphaPower = vectorList[ i0].z;
+					if( alphaPower < overwritePoint.z)
 					{
 						tmp_b = 0;
 					}
 					else
 					{
-						tmp_f = (tmp_f - center_vec.z) * 0.01f;
-						if( tmp_f > 1f)
+						alphaPower = (alphaPower - overwritePoint.z) * 0.01f;
+						if( alphaPower > 1f)
 						{
-							tmp_f = 1f;
+							alphaPower = 1f;
 						}
-						tmp_b = (byte)(tmp_f * 255.1f);
+						tmp_b = (byte)(alphaPower * 255.1f);
 					}
-					tmp_color.a = tmp_b;
-					color_list.Add( tmp_color);
+					addColor.a = tmp_b;
+					colorList.Add( addColor);
 				}
 #endif
 #if false
 				/*! 特に何もしない頂点カラーの設定 */
-				for( i0 = 0; i0 < vec_list.Count; ++i0)
+				addColor.a = 0;
+				for( i0 = 0; i0 < vectorList.Count; ++i0)
 				{
-					color_list.Add( tmp_color);
+					colorList.Add( addColor);
 				}
 #endif
 				/* マップサイズのポリゴンを生成する（地面に穴が開いているような状態で生成される事があるため、そこを塞ぐために生成する） */
-				tmp_color = new Color32(255,255,255,0);
-				int index = vec_list.Count;
+				addColor = new Color32(255,255,255,0);
+				int index = vectorList.Count;
 				for( i0 = 0; i0 < 4; ++i0)
 				{
 					switch( i0)
 					{
 						case 0:
-						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, max.z);
+						tmp_vec = new Vector3(min.x, ofsetY - 0.1f, max.z);
 						break;
 						case 1:
-						tmp_vec = new Vector3(max.x, ofset_y - 0.1f, max.z);
+						tmp_vec = new Vector3(max.x, ofsetY - 0.1f, max.z);
 						break;
 						case 2:
-						tmp_vec = new Vector3(max.x, ofset_y - 0.1f, min.z);
+						tmp_vec = new Vector3(max.x, ofsetY - 0.1f, min.z);
 						break;
 						case 3:
-						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, min.z);
+						tmp_vec = new Vector3(min.x, ofsetY - 0.1f, min.z);
 						break;
 						default:
-						tmp_vec = new Vector3(min.x, ofset_y - 0.1f, max.z);
+						tmp_vec = new Vector3(min.x, ofsetY - 0.1f, max.z);
 						break;
 					}
-					vec_list.Add(tmp_vec);
-					tmp_uv.x = tmp_vec.x * 0.01f;
-					tmp_uv.y = tmp_vec.z * 0.01f;
-					uv_list.Add(tmp_uv);
-					color_list.Add( tmp_color);
+					vectorList.Add(tmp_vec);
+					addUv.x = tmp_vec.x * 0.01f;
+					addUv.y = tmp_vec.z * 0.01f;
+					uvList.Add(addUv);
+					colorList.Add( addColor);
 				}
-				tri_list.Add( index + 0);	tri_list.Add( index + 1);	tri_list.Add( index + 2);
-				tri_list.Add( index + 2);	tri_list.Add( index + 3);	tri_list.Add( index + 0);
+				triangleList.Add( index + 0);	triangleList.Add( index + 1);	triangleList.Add( index + 2);
+				triangleList.Add( index + 2);	triangleList.Add( index + 3);	triangleList.Add( index + 0);
 				obj = Object.Instantiate( createObj) as GameObject;
 				obj.transform.parent = parent;
-				mesh_script = obj.GetComponent<MeshCreator>();
-				mesh_script.PolygonCreate( vec_list, tri_list, uv_list, color_list);
+				var meshScript = obj.GetComponent<MeshCreator>();
+				meshScript.PolygonCreate( vectorList, triangleList, uvList, colorList);
 			}
 
 			yield break;
