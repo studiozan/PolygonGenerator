@@ -59,41 +59,205 @@ namespace PolygonGenerator
 			uvs.Clear();
 			indices.Clear();
 			connectedMap.Clear();
+			indicesMap.Clear();
 			float halfWidth = width * 0.5f;
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point = points[i0];
 				List<FieldConnectPoint> connectPoints = point.ConnectionList;
-				for (int i1 = 0; i1 < connectPoints.Count; ++i1)
+				if (connectPoints.Count != 0)
 				{
-					FieldConnectPoint nextPoint = connectPoints[i1];
-					if (IsConnected(point.Index, nextPoint.Index) == false)
+					if (connectPoints.Count == 1)
 					{
-						RegisterConnectedMap(point.Index, nextPoint.Index);
-						Vector3 dir = nextPoint.Position - point.Position;
+						FieldConnectPoint p = connectPoints[0];
+						Vector3 dir = p.Position - point.Position;
 						dir.Normalize();
-						var leftBase = new Vector3(dir.z * -halfWidth, 0, dir.x * halfWidth);
-						var rightBase = new Vector3(dir.z * halfWidth, 0, dir.x * -halfWidth);
-						int indexBase = vertices.Count;
-						vertices.Add(leftBase + point.Position);
-						vertices.Add(rightBase + point.Position);
-						vertices.Add(leftBase + nextPoint.Position);
-						vertices.Add(rightBase + nextPoint.Position);
+						var left = new Vector3(-dir.z, 0, dir.x) * halfWidth + point.Position;
+						var right = new Vector3(dir.z, 0, -dir.x) * halfWidth + point.Position;
 
-						uvs.Add(new Vector2(0, uvY1));
-						uvs.Add(new Vector2(0, uvY2));
-						uvs.Add(new Vector2(1, uvY1));
-						uvs.Add(new Vector2(1, uvY2));
+						int leftIndex = vertices.Count;
+						int rightIndex = leftIndex + 1;
+						vertices.Add(left);
+						uvs.Add(new Vector2(0.5f, 0.5f));
+						vertices.Add(right);
+						uvs.Add(new Vector2(0.5f, 0.5f));
 
-						indices.Add(indexBase);
-						indices.Add(indexBase + 2);
-						indices.Add(indexBase + 1);
-						indices.Add(indexBase + 1);
-						indices.Add(indexBase + 2);
-						indices.Add(indexBase + 3);
+						Dictionary<int, int[]> map;
+						if (indicesMap.TryGetValue(point.Index, out map) == false)
+						{
+							map = new Dictionary<int, int[]>();
+							indicesMap.Add(point.Index, map);
+						}
+						map.Add(p.Index, new int[] { leftIndex, rightIndex });
+
+						if (indicesMap.TryGetValue(p.Index, out map) != false)
+						{
+							if (map.TryGetValue(point.Index, out int[] indexLR) != false)
+							{
+								indices.Add(leftIndex);
+								indices.Add(indexLR[1]);
+								indices.Add(rightIndex);
+								indices.Add(rightIndex);
+								indices.Add(indexLR[1]);
+								indices.Add(indexLR[0]);
+							}
+						}
+					}
+					else
+					{
+						List<int> clockwiseIndices = GetClockwiseIndices(point, connectPoints, 0);
+						int originIndex = vertices.Count;
+						Vector3 origin = point.Position;
+						vertices.Add(origin);
+						uvs.Add(new Vector2(0.5f, 0.5f));
+						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
+						{
+							Vector3 p1 = connectPoints[clockwiseIndices[i1]].Position;
+							Vector3 p2 = connectPoints[clockwiseIndices[(i1 + 1) % clockwiseIndices.Count]].Position;
+							Vector3 v1 = p1 - origin;
+							v1.Normalize();
+							Vector3 v2 = p2 - origin;
+							v2.Normalize();
+
+							var rightBase = new Vector3(v1.z, 0, -v1.x) * halfWidth;
+							var leftBase = new Vector3(-v2.z, 0, v2.x) * halfWidth;
+
+							Vector3 r1 = rightBase + origin;
+							Vector3 r2 = rightBase + p1;
+							Vector3 l1 = leftBase + origin;
+							Vector3 l2 = leftBase + p2;
+
+							var intersection = new Vector3();
+							if (TryGetIntersection(r1, r2, l1, l2, out intersection) == false)
+							{
+								intersection = r1;
+							}
+
+							vertices.Add(intersection);
+							uvs.Add(new Vector2(0.5f, 0.5f));
+
+							indices.Add(originIndex);
+							indices.Add(originIndex + i1 + 1);
+							indices.Add(originIndex + (i1 + 1) % clockwiseIndices.Count + 1);
+						}
+
+						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
+						{
+							FieldConnectPoint p = connectPoints[clockwiseIndices[i1]];
+
+							int leftIndex = originIndex + (i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1;
+							int rightIndex = originIndex + ((i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1) % clockwiseIndices.Count + 1;
+
+							Dictionary<int, int[]> map;
+							if (indicesMap.TryGetValue(point.Index, out map) == false)
+							{
+								map = new Dictionary<int, int[]>();
+								indicesMap.Add(point.Index, map);
+							}
+							map.Add(p.Index, new int[] { leftIndex, rightIndex });
+
+							if (indicesMap.TryGetValue(p.Index, out map) != false)
+							{
+								if (map.TryGetValue(point.Index, out int[] indexLR) != false)
+								{
+									indices.Add(leftIndex);
+									indices.Add(indexLR[1]);
+									indices.Add(rightIndex);
+									indices.Add(rightIndex);
+									indices.Add(indexLR[1]);
+									indices.Add(indexLR[0]);
+								}
+							}
+						}
 					}
 				}
 			}
+		}
+
+		List<int> GetClockwiseIndices(FieldConnectPoint origin, List<FieldConnectPoint> points, int baseIndex)
+		{
+			var clockwise = new List<int>();
+
+			var rightUp = new List<KeyValuePair<int, float>>();
+			var rightDown = new List<KeyValuePair<int, float>>();
+			var leftDown = new List<KeyValuePair<int, float>>();
+			var leftUp = new List<KeyValuePair<int, float>>();
+
+			Vector3 baseVec = points[baseIndex].Position - origin.Position;
+			baseVec.Normalize();
+			var right = new Vector3(baseVec.z, 0, -baseVec.x);
+			var left = new Vector3(-baseVec.z, 0, baseVec.x);
+			for (int i0 = 0; i0 < points.Count; ++i0)
+			{
+				if (i0 != baseIndex)
+				{
+					Vector3 v = points[i0].Position - origin.Position;
+					v.Normalize();
+					float cross1 = Vector3.Cross(baseVec, v).y;
+					//右
+					if (cross1 >= 0)
+					{
+						float cross2 = Vector3.Cross(right, v).y;
+						if (cross2 <= 0)
+						{
+							rightUp.Add(new KeyValuePair<int, float>(i0, cross2));
+						}
+						else
+						{
+							rightDown.Add(new KeyValuePair<int, float>(i0, cross2));
+						}
+					}
+					//左
+					else
+					{
+						float cross2 = Vector3.Cross(left, v).y;
+						if (cross2 <= 0)
+						{
+							leftDown.Add(new KeyValuePair<int, float>(i0, cross2));
+						}
+						else
+						{
+							leftUp.Add(new KeyValuePair<int, float>(i0, cross2));
+						}
+					}
+				}
+			}
+
+			rightUp.Sort((a, b) => a.Value.CompareTo(b.Value));
+			rightDown.Sort((a, b) => a.Value.CompareTo(b.Value));
+			leftDown.Sort((a, b) => a.Value.CompareTo(b.Value));
+			leftUp.Sort((a, b) => a.Value.CompareTo(b.Value));
+
+			clockwise.Add(baseIndex);
+			clockwise.AddRange(rightUp.ConvertAll<int>(pair => pair.Key));
+			clockwise.AddRange(rightDown.ConvertAll<int>(pair => pair.Key));
+			clockwise.AddRange(leftDown.ConvertAll<int>(pair => pair.Key));
+			clockwise.AddRange(leftUp.ConvertAll<int>(pair => pair.Key));
+
+			return clockwise;
+		}
+
+		bool TryGetIntersection(Vector3 s1, Vector3 e1, Vector3 s2, Vector3 e2, out Vector3 intersection)
+		{
+			bool isIntersecting = false;
+			intersection = Vector3.zero;
+
+			Vector3 v1 = e1 - s1;
+			Vector3 v2 = s2 - s1;
+			Vector3 v3 = s1 - e2;
+			Vector3 v4 = e2 - s2;
+
+			float area1 = Vector3.Cross(v1, v2).y * 0.5f;
+			float area2 = Vector3.Cross(v1, v3).y * 0.5f;
+			float area = area1 + area2;
+
+			if (Mathf.Approximately(area, 0) == false)
+			{
+				isIntersecting = true;
+				intersection = s2 + v4 * area1 / area;
+			}
+
+			return isIntersecting;
 		}
 
 		bool IsConnected(int index1, int index2)
@@ -142,5 +306,7 @@ namespace PolygonGenerator
 		List<Vector2> uvs = new List<Vector2>();
 		List<int> indices = new List<int>();
 		Dictionary<int, HashSet<int>> connectedMap = new Dictionary<int, HashSet<int>>();
+
+		Dictionary<int, Dictionary<int, int[]>> indicesMap = new Dictionary<int, Dictionary<int, int[]>>();
 	}
 }
