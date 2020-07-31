@@ -66,7 +66,7 @@ namespace PolygonGenerator
 			Vector2[] vec_tbl = new Vector2[ 2];
 			float uv_x, uv_y;
 
-			var standardPoint = new Vector2( typeUv[ 0].x + 0.0625f, typeUv[ 0].y);
+			var standardPoint = new Vector2( typeUv[ 0].x + 0.125f, typeUv[ 0].y);
 
 			switch( RoofTopType)
 			{
