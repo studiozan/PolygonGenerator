@@ -185,11 +185,6 @@ namespace PolygonGenerator
 
 		public enum BuildingType
 		{
-			kBuildingA = 0,
-			kBuildingB,
-			kBuildingC,
-			kBuildingD,
-
 			kBuildingA01 = 0,
 			kBuildingA02,
 			kBuildingA03,

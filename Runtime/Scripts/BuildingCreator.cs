@@ -25,9 +25,22 @@ namespace PolygonGenerator
 			var parameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
 			{
-				BuildingParameter.BuildingType.kBuildingA,
-				BuildingParameter.BuildingType.kBuildingB,
-				BuildingParameter.BuildingType.kBuildingC,
+				BuildingParameter.BuildingType.kBuildingA01,	BuildingParameter.BuildingType.kBuildingA02,
+				BuildingParameter.BuildingType.kBuildingA03,	BuildingParameter.BuildingType.kBuildingA04,
+				BuildingParameter.BuildingType.kBuildingB01,	BuildingParameter.BuildingType.kBuildingB02,
+				BuildingParameter.BuildingType.kBuildingB03,	BuildingParameter.BuildingType.kBuildingB04,
+				BuildingParameter.BuildingType.kBuildingC01,	BuildingParameter.BuildingType.kBuildingC02,
+				BuildingParameter.BuildingType.kBuildingC03,	BuildingParameter.BuildingType.kBuildingC04,
+				BuildingParameter.BuildingType.kBuildingD01,	BuildingParameter.BuildingType.kBuildingD02,
+				BuildingParameter.BuildingType.kBuildingD03,	BuildingParameter.BuildingType.kBuildingD04,
+				BuildingParameter.BuildingType.kBuildingE01,	BuildingParameter.BuildingType.kBuildingE02,
+				BuildingParameter.BuildingType.kBuildingE03,	BuildingParameter.BuildingType.kBuildingE04,
+				BuildingParameter.BuildingType.kBuildingF01,	BuildingParameter.BuildingType.kBuildingF02,
+				BuildingParameter.BuildingType.kBuildingF03,	BuildingParameter.BuildingType.kBuildingF04,
+				BuildingParameter.BuildingType.kBuildingG01,	BuildingParameter.BuildingType.kBuildingG02,
+				BuildingParameter.BuildingType.kBuildingG03,	BuildingParameter.BuildingType.kBuildingG04,
+				BuildingParameter.BuildingType.kBuildingH01,	BuildingParameter.BuildingType.kBuildingH02,
+				BuildingParameter.BuildingType.kBuildingH03,	BuildingParameter.BuildingType.kBuildingH04,
 			};
 
 			List<SurroundedArea> buildableAreas = DetectBuildableAreas(areas, areaSize, sideRatio);
