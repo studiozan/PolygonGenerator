@@ -53,6 +53,7 @@ namespace PolygonGenerator
 			}
 		}
 
+		//冗長
 		void CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			vertices.Clear();
@@ -78,9 +79,9 @@ namespace PolygonGenerator
 						int leftIndex = vertices.Count;
 						int rightIndex = leftIndex + 1;
 						vertices.Add(left);
-						uvs.Add(new Vector2(0.5f, 0.5f));
+						uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 						vertices.Add(right);
-						uvs.Add(new Vector2(0.5f, 0.5f));
+						uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 
 						Dictionary<int, int[]> map;
 						if (indicesMap.TryGetValue(point.Index, out map) == false)
@@ -94,12 +95,20 @@ namespace PolygonGenerator
 						{
 							if (map.TryGetValue(point.Index, out int[] indexLR) != false)
 							{
+								vertices.Add(vertices[indexLR[1]]);
+								vertices.Add(vertices[indexLR[0]]);
+
+								uvs[leftIndex] = new Vector2(0, uvY1);
+								uvs[rightIndex] = new Vector2(0, uvY2);
+								uvs.Add(new Vector2(1, uvY1));
+								uvs.Add(new Vector2(1, uvY2));
+
 								indices.Add(leftIndex);
-								indices.Add(indexLR[1]);
+								indices.Add(leftIndex + 2);
 								indices.Add(rightIndex);
 								indices.Add(rightIndex);
-								indices.Add(indexLR[1]);
-								indices.Add(indexLR[0]);
+								indices.Add(leftIndex + 2);
+								indices.Add(rightIndex + 2);
 							}
 						}
 					}
@@ -108,8 +117,11 @@ namespace PolygonGenerator
 						List<int> clockwiseIndices = GetClockwiseIndices(point, connectPoints, 0);
 						int originIndex = vertices.Count;
 						Vector3 origin = point.Position;
-						vertices.Add(origin);
-						uvs.Add(new Vector2(0.5f, 0.5f));
+						if (connectPoints.Count >= 3)
+						{
+							vertices.Add(origin);
+							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
+						}
 						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
 						{
 							Vector3 p1 = connectPoints[clockwiseIndices[i1]].Position;
@@ -134,11 +146,14 @@ namespace PolygonGenerator
 							}
 
 							vertices.Add(intersection);
-							uvs.Add(new Vector2(0.5f, 0.5f));
+							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 
-							indices.Add(originIndex);
-							indices.Add(originIndex + i1 + 1);
-							indices.Add(originIndex + (i1 + 1) % clockwiseIndices.Count + 1);
+							if (connectPoints.Count >= 3)
+							{
+								indices.Add(originIndex);
+								indices.Add(originIndex + i1 + 1);
+								indices.Add(originIndex + (i1 + 1) % clockwiseIndices.Count + 1);
+							}
 						}
 
 						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
@@ -147,6 +162,12 @@ namespace PolygonGenerator
 
 							int leftIndex = originIndex + (i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1;
 							int rightIndex = originIndex + ((i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1) % clockwiseIndices.Count + 1;
+
+							if (connectPoints.Count < 3)
+							{
+								--leftIndex;
+								--rightIndex;
+							}
 
 							Dictionary<int, int[]> map;
 							if (indicesMap.TryGetValue(point.Index, out map) == false)
@@ -160,12 +181,23 @@ namespace PolygonGenerator
 							{
 								if (map.TryGetValue(point.Index, out int[] indexLR) != false)
 								{
-									indices.Add(leftIndex);
-									indices.Add(indexLR[1]);
-									indices.Add(rightIndex);
-									indices.Add(rightIndex);
-									indices.Add(indexLR[1]);
-									indices.Add(indexLR[0]);
+									int baseIndex = vertices.Count;
+									vertices.Add(vertices[leftIndex]);
+									vertices.Add(vertices[rightIndex]);
+									vertices.Add(vertices[indexLR[1]]);
+									vertices.Add(vertices[indexLR[0]]);
+
+									uvs.Add(new Vector2(0, uvY1));
+									uvs.Add(new Vector2(0, uvY2));
+									uvs.Add(new Vector2(1, uvY1));
+									uvs.Add(new Vector2(1, uvY2));
+
+									indices.Add(baseIndex);
+									indices.Add(baseIndex + 2);
+									indices.Add(baseIndex + 1);
+									indices.Add(baseIndex + 1);
+									indices.Add(baseIndex + 2);
+									indices.Add(baseIndex + 3);
 								}
 							}
 						}
