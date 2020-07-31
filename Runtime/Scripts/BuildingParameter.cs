@@ -61,93 +61,105 @@ namespace PolygonGenerator
 		/*! 建物の屋上部分のUV座標をテクスチャの左上から時計回りで渡す */
 		public List<Vector2> GetRoofTopUV()
 		{
-			List<Vector2> ret_list = new List<Vector2>();
+			var result = new List<Vector2>();
+			List<Vector2> typeUv = GetSideUV();
 			Vector2[] vec_tbl = new Vector2[ 2];
 			float uv_x, uv_y;
+
+			var standardPoint = new Vector2( typeUv[ 0].x + 0.0625f, typeUv[ 0].y);
 
 			switch( RoofTopType)
 			{
 			case 0:
-				uv_x = 0f;		uv_y = 0.125f;
+				uv_x = 0f;		uv_y = 0.0625f;
 				break;
 			case 1:
-				uv_x = 0.125f;	uv_y = 0.125f;
+				uv_x = 0.0625f;	uv_y = 0.0625f;
 				break;
 			case 2:
 				uv_x = 0f;		uv_y = 0f;
 				break;
 			case 3:
-				uv_x = 0.125f;	uv_y = 0f;
+				uv_x = 0.0625f;	uv_y = 0f;
 				break;
 			default:
-				uv_x = 0f;		uv_y = 0.125f;
+				uv_x = 0f;		uv_y = 0.0625f;
 				break;
 			}
 
-			switch( TextureType)
-			{
-			case BuildingType.kBuildingA:
-				vec_tbl[ 0] = new Vector2( uv_x, uv_y);
-				vec_tbl[ 1] = new Vector2( uv_x + 0.125f, uv_y + 0.125f);
-				break;
-			case BuildingType.kBuildingB:
-				vec_tbl[ 0] = new Vector2( uv_x + 0.75f, uv_y);
-				vec_tbl[ 1] = new Vector2( uv_x + 0.875f, uv_y + 0.125f);
-				break;
-			case BuildingType.kBuildingC:
-				vec_tbl[ 0] = new Vector2( uv_x + 0.5f, uv_y);
-				vec_tbl[ 1] = new Vector2( uv_x + 0.625f, uv_y + 0.125f);
-				break;
-			case BuildingType.kBuildingD:
-				/*! 屋上のタイプが1つしかないので、uv_yは使わない */
-				vec_tbl[ 0] = new Vector2( uv_x + 0.25f, 0f);
-				vec_tbl[ 1] = new Vector2( uv_x + 0.5f, 0.25f);
-				break;
-			default:
-				vec_tbl[ 0] = new Vector2( uv_x, uv_y);
-				vec_tbl[ 1] = new Vector2( uv_x + 0.125f, uv_y + 0.125f);
-				break;
-			}
+			vec_tbl[ 0] = new Vector2( uv_x, uv_y);
+			vec_tbl[ 1] = new Vector2( uv_x + 0.0625f, uv_y + 0.0625f);
 
-			ret_list.Add(new Vector2( vec_tbl[ 0].x, vec_tbl[ 1].y));
-			ret_list.Add(new Vector2( vec_tbl[ 1].x, vec_tbl[ 1].y));
-			ret_list.Add(new Vector2( vec_tbl[ 1].x, vec_tbl[ 0].y));
-			ret_list.Add(new Vector2( vec_tbl[ 0].x, vec_tbl[ 0].y));
+			result.Add(new Vector2( standardPoint.x + vec_tbl[ 0].x, standardPoint.y + vec_tbl[ 1].y));
+			result.Add(new Vector2( standardPoint.x + vec_tbl[ 1].x, standardPoint.y + vec_tbl[ 1].y));
+			result.Add(new Vector2( standardPoint.x + vec_tbl[ 1].x, standardPoint.y + vec_tbl[ 0].y));
+			result.Add(new Vector2( standardPoint.x + vec_tbl[ 0].x, standardPoint.y + vec_tbl[ 0].y));
 
-			return ret_list;
+			return result;
 		}
 
 		/*! 建物の側面部分のUV座標をテクスチャの左上から時計回りで渡す */
 		public List<Vector2> GetSideUV()
 		{
-			List<Vector2> ret_list = new List<Vector2>();
-			Vector2 tmp_vec = Vector2.zero;
+			var result = new List<Vector2>();
+			var surplus = ((int)TextureType % 8);
+			var vectorX = Vector2.zero;
+			var vectorY = Vector2.zero;
 
-			switch( TextureType)
+			switch( surplus)
 			{
-			case BuildingType.kBuildingA:
-				tmp_vec.x = 0.75f;		tmp_vec.y = 1f;
+			case 0:
+				vectorY.x = 0.875f;		vectorY.y = 1f;
 				break;
-			case BuildingType.kBuildingB:
-				tmp_vec.x = 0.5f;		tmp_vec.y = 0.75f;
+			case 1:
+				vectorY.x = 0.75f;		vectorY.y = 0.875f;
 				break;
-			case BuildingType.kBuildingC:
-				tmp_vec.x = 0.25f;		tmp_vec.y = 0.5f;
+			case 2:
+				vectorY.x = 0.625f;		vectorY.y = 0.75f;
 				break;
-			case BuildingType.kBuildingD:
-				tmp_vec.x = 0.5f;		tmp_vec.y = 0.75f;
+			case 3:
+				vectorY.x = 0.5f;		vectorY.y = 0.625f;
+				break;
+			case 4:
+				vectorY.x = 0.375f;		vectorY.y = 0.5f;
+				break;
+			case 5:
+				vectorY.x = 0.25f;		vectorY.y = 0.375f;
+				break;
+			case 6:
+				vectorY.x = 0.125f;		vectorY.y = 0.25f;
+				break;
+			case 7:
+				vectorY.x = 0f;			vectorY.y = 0.125f;
 				break;
 			default:
-				tmp_vec.x = 0.75f;		tmp_vec.y = 1f;
+				vectorY.x = 0.875f;		vectorY.y = 1f;
 				break;
 			}
 
-			ret_list.Add(new Vector2( 0f, tmp_vec.y));
-			ret_list.Add(new Vector2( 0.25f, tmp_vec.y));
-			ret_list.Add(new Vector2( 0.25f, tmp_vec.x));
-			ret_list.Add(new Vector2( 0f, tmp_vec.x));
+			if( (int)BuildingType.kBuildingB04 >= (int)TextureType)
+			{
+				vectorX.x = 0f;		vectorX.y = 0.125f;
+			}
+			else if( (int)BuildingType.kBuildingD04 >= (int)TextureType)
+			{
+				vectorX.x = 0.25f;	vectorX.y = 0.375f;
+			}
+			else if( (int)BuildingType.kBuildingF04 >= (int)TextureType)
+			{
+				vectorX.x = 0.5f;	vectorX.y = 0.625f;
+			}
+			else if( (int)BuildingType.kBuildingH04 >= (int)TextureType)
+			{
+				vectorX.x = 0.75f;	vectorX.y = 0.875f;
+			}
 
-			return ret_list;
+			result.Add(new Vector2( vectorX.x, vectorY.y));
+			result.Add(new Vector2( vectorX.y, vectorY.y));
+			result.Add(new Vector2( vectorX.y, vectorY.x));
+			result.Add(new Vector2( vectorX.x, vectorY.x));
+
+			return result;
 		}
 
 		/*! 座標リスト */
@@ -177,6 +189,39 @@ namespace PolygonGenerator
 			kBuildingB,
 			kBuildingC,
 			kBuildingD,
+
+			kBuildingA01 = 0,
+			kBuildingA02,
+			kBuildingA03,
+			kBuildingA04,
+			kBuildingB01,
+			kBuildingB02,
+			kBuildingB03,
+			kBuildingB04,
+			kBuildingC01,
+			kBuildingC02,
+			kBuildingC03,
+			kBuildingC04,
+			kBuildingD01,
+			kBuildingD02,
+			kBuildingD03,
+			kBuildingD04,
+			kBuildingE01,
+			kBuildingE02,
+			kBuildingE03,
+			kBuildingE04,
+			kBuildingF01,
+			kBuildingF02,
+			kBuildingF03,
+			kBuildingF04,
+			kBuildingG01,
+			kBuildingG02,
+			kBuildingG03,
+			kBuildingG04,
+			kBuildingH01,
+			kBuildingH02,
+			kBuildingH03,
+			kBuildingH04,
 		}
 
 		/*! ビルの高さ */
