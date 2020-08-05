@@ -147,12 +147,16 @@ namespace PolygonGenerator
 
 							vertices.Add(intersection);
 							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
+							vertices.Add(intersection);
+							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 
 							if (connectPoints.Count >= 3)
 							{
 								indices.Add(originIndex);
-								indices.Add(originIndex + i1 + 1);
-								indices.Add(originIndex + (i1 + 1) % clockwiseIndices.Count + 1);
+								int offsetL = (i1 + 1) * 2;
+								int offsetR = (offsetL + 1) % (clockwiseIndices.Count * 2);
+								indices.Add(originIndex + offsetL);
+								indices.Add(originIndex + offsetR);
 							}
 						}
 
@@ -160,8 +164,10 @@ namespace PolygonGenerator
 						{
 							FieldConnectPoint p = connectPoints[clockwiseIndices[i1]];
 
-							int leftIndex = originIndex + (i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1;
-							int rightIndex = originIndex + ((i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1) % clockwiseIndices.Count + 1;
+							int offsetL = ((i1 + clockwiseIndices.Count - 1) % clockwiseIndices.Count + 1) * 2;
+							int offsetR = (offsetL + 1) % (clockwiseIndices.Count * 2);
+							int leftIndex = originIndex + offsetL;
+							int rightIndex = originIndex + offsetR;
 
 							if (connectPoints.Count < 3)
 							{
@@ -181,23 +187,17 @@ namespace PolygonGenerator
 							{
 								if (map.TryGetValue(point.Index, out int[] indexLR) != false)
 								{
-									int baseIndex = vertices.Count;
-									vertices.Add(vertices[leftIndex]);
-									vertices.Add(vertices[rightIndex]);
-									vertices.Add(vertices[indexLR[1]]);
-									vertices.Add(vertices[indexLR[0]]);
+									uvs[leftIndex] = new Vector2(1, uvY1);
+									uvs[rightIndex] = new Vector2(1, uvY2);
+									uvs[indexLR[1]] = new Vector2(0, uvY1);
+									uvs[indexLR[0]] = new Vector2(0, uvY2);
 
-									uvs.Add(new Vector2(0, uvY1));
-									uvs.Add(new Vector2(0, uvY2));
-									uvs.Add(new Vector2(1, uvY1));
-									uvs.Add(new Vector2(1, uvY2));
-
-									indices.Add(baseIndex);
-									indices.Add(baseIndex + 2);
-									indices.Add(baseIndex + 1);
-									indices.Add(baseIndex + 1);
-									indices.Add(baseIndex + 2);
-									indices.Add(baseIndex + 3);
+									indices.Add(leftIndex);
+									indices.Add(indexLR[1]);
+									indices.Add(rightIndex);
+									indices.Add(rightIndex);
+									indices.Add(indexLR[1]);
+									indices.Add(indexLR[0]);
 								}
 							}
 						}
