@@ -20,7 +20,7 @@ namespace PolygonGenerator
 			maxHeight = max;
 		}
 
-		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, float areaSize, float sideRatio, float generationRate = 1)
+		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate)
 		{
 			var parameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
@@ -43,7 +43,7 @@ namespace PolygonGenerator
 				BuildingParameter.BuildingType.kBuildingH03,	BuildingParameter.BuildingType.kBuildingH04,
 			};
 
-			List<SurroundedArea> buildableAreas = DetectBuildableAreas(areas, areaSize, sideRatio);
+			List<SurroundedArea> buildableAreas = DetectBuildableAreas(areas, condition);
 			int count = buildableAreas.Count;
 			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(generationRate));
 
@@ -65,42 +65,110 @@ namespace PolygonGenerator
 			yield break;
 		}
 
-		List<SurroundedArea> DetectBuildableAreas(List<SurroundedArea> areas, float areaSize, float sideRatio)
+		List<SurroundedArea> DetectBuildableAreas(List<SurroundedArea> areas, BuildingCondition condition)
 		{
 			var buildableArea = new List<SurroundedArea>();
 			for (int i0 = 0; i0 < areas.Count; ++i0)
 			{
-				var points = new List<Vector3>(areas[i0].AreaPoints);
-				if (points.Count == 3)
+				var areaPoints = new List<Vector3>(areas[i0].AreaPoints);
+				if (areaPoints.Count == 3)
 				{
-					points.Add(points[2]);
+					areaPoints.Add(areaPoints[2]);
 				}
 
-				if (CanBuildBuilding(points, areaSize, sideRatio) != false)
+				if (CanBuildBuilding(areaPoints, condition) != false)
 				{
-					buildableArea.Add(new SurroundedArea { AreaPoints = points });
+					buildableArea.Add(new SurroundedArea { AreaPoints = areaPoints });
 				}
 			}
 
 			return buildableArea;
 		}
 
-		bool CanBuildBuilding(List<Vector3> points, float areaSize, float sideRatio)
+		bool CanBuildBuilding(List<Vector3> areaPoints, BuildingCondition condition)
 		{
 			bool canBuild = true;
 
-			Vector3 v1 = points[1] - points[0];
-			Vector3 v2 = points[2] - points[1];
-			Vector3 v3 = points[3] - points[2];
-			Vector3 v4 = points[0] - points[3];
-
-			float s = (Mathf.Abs(Vector3.Cross(v1, v2).y) + Mathf.Abs(Vector3.Cross(v3, v4).y)) * 0.5f;
-			if (s < areaSize || (CalcRatio(v1, v3) >= sideRatio && CalcRatio(v2, v4) >= sideRatio))
+			if (IsConvex(areaPoints) == false)
 			{
 				canBuild = false;
 			}
+			else
+			{
+				Vector3 v1 = areaPoints[1] - areaPoints[0];
+				Vector3 v2 = areaPoints[2] - areaPoints[1];
+				Vector3 v3 = areaPoints[3] - areaPoints[2];
+				Vector3 v4 = areaPoints[0] - areaPoints[3];
+
+				float s = (Mathf.Abs(Vector3.Cross(v1, v2).y) + Mathf.Abs(Vector3.Cross(v3, v4).y)) * 0.5f;
+				float sideRatio = condition.sideRatio;
+				if (s < condition.minAreaSize || (CalcRatio(v1, v3) >= sideRatio && CalcRatio(v2, v4) >= sideRatio))
+				{
+					canBuild = false;
+				}
+				else
+				{
+					for (int i0 = 0; i0 < areaPoints.Count; ++i0)
+					{
+						Vector3 p0 = areaPoints[i0];
+						Vector3 p1 = areaPoints[(i0 + 1) % areaPoints.Count];
+						Vector3 p2 = areaPoints[(i0 + areaPoints.Count - 1) % areaPoints.Count];
+
+						Vector3 dir1 = p1 - p0;
+						Vector3 dir2 = p2 - p0;
+
+						float angle = -Vector2.SignedAngle(new Vector2(dir1.x, dir1.z), new Vector2(dir2.x, dir2.z));
+						angle = angle < 0 ? 360 + angle : angle;
+						if (angle < condition.minAngle || angle > condition.maxAngle)
+						{
+							canBuild = false;
+							break;
+						}
+					}
+				}
+			}
 
 			return canBuild;
+		}
+
+		bool IsConvex(List<Vector3> quadrangle)
+		{
+			bool isConvex = false;
+
+			for (int i0 = 0; i0 < quadrangle.Count; ++i0)
+			{
+				Vector3 point = quadrangle[i0];
+				var triangle = new List<Vector3>(quadrangle);
+				triangle.RemoveAt(i0);
+				int sign = 0;
+				isConvex = false;
+				for (int i1 = 0; i1 < triangle.Count; ++i1)
+				{
+					Vector3 v = triangle[(i1 + 1) % triangle.Count] - triangle[i1];
+					Vector3 p = point - triangle[i1];
+
+					float cross = Vector3.Cross(v, p).y;
+					if (i1 == 0)
+					{
+						sign = cross < 0 ? -1 : 1;
+					}
+					else
+					{
+						if (cross * sign <= 0)
+						{
+							isConvex = true;
+							break;
+						}
+					}
+				}
+
+				if (isConvex == false)
+				{
+					break;
+				}
+			}
+
+			return isConvex;
 		}
 
 		float CalcRatio(Vector3 v1, Vector3 v2)
