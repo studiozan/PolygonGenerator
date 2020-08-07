@@ -22,6 +22,8 @@ namespace PolygonGenerator
 
 		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate)
 		{
+			lastInterruptionTime = System.DateTime.Now;
+
 			var parameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
 			{
@@ -43,7 +45,8 @@ namespace PolygonGenerator
 				BuildingParameter.BuildingType.kBuildingH03,	BuildingParameter.BuildingType.kBuildingH04,
 			};
 
-			List<SurroundedArea> buildableAreas = DetectBuildableAreas(areas, condition);
+			var buildableAreas = new List<SurroundedArea>();;
+			yield return DetectBuildableAreas(areas, condition, buildableAreas);
 			int count = buildableAreas.Count;
 			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(generationRate));
 
@@ -58,16 +61,20 @@ namespace PolygonGenerator
 				--count;
 				buildableAreas[randomIndex] = buildableAreas[count];
 				buildableAreas.RemoveAt(count);
+
+				if (System.DateTime.Now.Subtract(lastInterruptionTime).TotalMilliseconds >= LinePolygonCreator.kElapsedTimeToInterrupt)
+				{
+					yield return null;
+					lastInterruptionTime = System.DateTime.Now;
+				}
 			}
 
 			meshCreator.BuildingPolygonCreate(parameters);
-
-			yield break;
 		}
 
-		List<SurroundedArea> DetectBuildableAreas(List<SurroundedArea> areas, BuildingCondition condition)
+		IEnumerator DetectBuildableAreas(List<SurroundedArea> areas, BuildingCondition condition, List<SurroundedArea> output)
 		{
-			var buildableArea = new List<SurroundedArea>();
+			output.Clear();
 			for (int i0 = 0; i0 < areas.Count; ++i0)
 			{
 				var areaPoints = new List<Vector3>(areas[i0].AreaPoints);
@@ -78,11 +85,15 @@ namespace PolygonGenerator
 
 				if (CanBuildBuilding(areaPoints, condition) != false)
 				{
-					buildableArea.Add(new SurroundedArea { AreaPoints = areaPoints });
+					output.Add(new SurroundedArea { AreaPoints = areaPoints });
+				}
+
+				if (System.DateTime.Now.Subtract(lastInterruptionTime).TotalMilliseconds >= LinePolygonCreator.kElapsedTimeToInterrupt)
+				{
+					yield return null;
+					lastInterruptionTime = System.DateTime.Now;
 				}
 			}
-
-			return buildableArea;
 		}
 
 		bool CanBuildBuilding(List<Vector3> areaPoints, BuildingCondition condition)
@@ -187,6 +198,7 @@ namespace PolygonGenerator
 		}
 
 		System.Random random;
+		System.DateTime lastInterruptionTime;
 		MeshCreator meshCreator;
 		float minHeight;
 		float maxHeight;

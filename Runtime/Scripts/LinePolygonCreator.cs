@@ -18,12 +18,12 @@ namespace PolygonGenerator
 		{
 			if (meshFilter != null)
 			{
+				lastInterruptionTime = System.DateTime.Now;
+
 				SetPointsIndex(points);
-				CreateMeshParameter(points, width, uvY1, uvY2);
+				yield return CreateMeshParameter(points, width, uvY1, uvY2);
 				meshFilter.sharedMesh = CreateMesh();
 			}
-
-			yield break;
 		}
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
@@ -53,8 +53,7 @@ namespace PolygonGenerator
 			}
 		}
 
-		//冗長
-		void CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
+		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			vertices.Clear();
 			uvs.Clear();
@@ -203,6 +202,12 @@ namespace PolygonGenerator
 						}
 					}
 				}
+
+				if (System.DateTime.Now.Subtract(lastInterruptionTime).TotalMilliseconds >= kElapsedTimeToInterrupt)
+				{
+					yield return null;
+					lastInterruptionTime = System.DateTime.Now;
+				}
 			}
 		}
 
@@ -330,6 +335,10 @@ namespace PolygonGenerator
 			}
 		}
 
+
+		public static readonly float kElapsedTimeToInterrupt = 16.7f;
+
+		System.DateTime lastInterruptionTime;
 
 		GameObject gameObject;
 		MeshFilter meshFilter;
