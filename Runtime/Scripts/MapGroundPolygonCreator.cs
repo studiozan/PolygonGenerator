@@ -165,6 +165,149 @@ namespace PolygonGenerator
 			yield break;
 		}
 
+		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldPoint> pointList, List<PointType> useTypeList,
+			Vector3 min, Vector3 max)
+		{
+			var vectorList = new List<Vector3>();
+			var uvList = new List<Vector2>();
+			var triangleIndexList = new List<int>();
+			var colorList = new List<Color32>();
+			var addColor = new Color32(255,255,255,0);
+			var positionList = new List<Vector3>();
+			var trianglePoint = new List<TriangleData>();
+			int i0, i1, i2;
+			var time = System.DateTime.Now;
+
+			for( i0 = 0; i0 < pointList.Count; ++i0)
+			{
+				for( i1 = 0; i1 < useTypeList.Count; ++i1)
+				{
+					if( pointList[ i0].Type == useTypeList[ i1])
+					{
+						positionList.Add( pointList[ i0].Position);
+						break;
+					}
+				}
+			}
+
+			var mapSize = max - min;
+			var center = new Vector3( mapSize.x * 0.5f + min.x, 0f, mapSize.z * 0.5f + min.z);
+			var addPoint = new TriangleData();
+			var length = mapSize.x + mapSize.z;
+			addPoint.SetPoint( new Vector3( center.x + length, 0f, center.z - length),
+				new Vector3( center.x - length, 0f, center.z - length),
+				new Vector3( center.x, 0f, center.z + length));
+			trianglePoint.Add( addPoint);
+
+			var candidateTriangle = new List<TriangleData>();
+			var checkList = new List<bool>();
+
+			for( i0 = 0; i0 < positionList.Count; ++i0)
+			{
+				candidateTriangle.Clear();
+				checkList.Clear();
+				for( i1 = trianglePoint.Count - 1; i1 >= 0; --i1)
+				{
+					var sub = positionList[ i0] - trianglePoint[ i1].CirclePoint;
+					var sub_length = sub.x * sub.x + sub.z * sub.z;
+					if( sub_length > trianglePoint[ i1].CircleRadius)
+					{
+						continue;
+					}
+					for( i2 = 0; i2 < 3; ++i2)
+					{
+						addPoint = new TriangleData();
+						addPoint.SetPoint( positionList[ i0], trianglePoint[ i1].Point[ i2], trianglePoint[ i1].Point[ (i2 + 1) % 3]);
+						candidateTriangle.Add( addPoint);
+						checkList.Add( false);
+					}
+					trianglePoint.RemoveAt( i1);
+				}
+
+				for( i1 = 0; i1 < candidateTriangle.Count - 1; ++i1)
+				{
+					for( i2 = i1 + 1; i2 < candidateTriangle.Count; ++i2)
+					{
+						if( checkList[ i1] != false && checkList[ i2] != false)
+						{
+							continue;
+						}
+						var ret = TriangleData.EqualCheck( candidateTriangle[ i1], candidateTriangle[ i2]);
+						if( ret != false)
+						{
+							checkList[ i1] = true;
+							checkList[ i2] = true;
+						}
+					}
+				}
+				for( i1 = 0; i1 < candidateTriangle.Count; ++i1)
+				{
+					if( checkList[ i1] == false)
+					{
+						trianglePoint.Add( candidateTriangle[ i1]);
+					}
+				}
+				if( System.DateTime.Now.Subtract( time).TotalMilliseconds >= LinePolygonCreator.kElapsedTimeToInterrupt)
+				{
+					yield return null;
+					time = System.DateTime.Now;
+				}
+			}
+
+			var addUv = Vector2.zero;
+			Vector3[] addVector = new Vector3[ 3];
+			for( i0 = 0; i0 < trianglePoint.Count; ++i0)
+			{
+				for( i1 = 0; i1 < 3; ++i1)
+				{
+					addVector[ i1] = trianglePoint[ i0].Point[ i1];
+				}
+				var clossY = CrossY( addVector[ 0], addVector[ 1], addVector[ 2]);
+				if( clossY < 0)
+				{
+					var temp = addVector[ 1];
+					addVector[ 1] = addVector[ 2];
+					addVector[ 2] = temp;
+				}
+				for( i1 = 0; i1 < 3; ++i1)
+				{
+					vectorList.Add( addVector[ i1]);
+					addUv.x = addVector[ i1].x * 0.001f;
+					addUv.y = addVector[ i1].z * 0.001f;
+					uvList.Add( addUv);
+					triangleIndexList.Add( i0 * 3 + i1);
+				}
+			}
+			
+			var SystemRandom = new System.Random();
+			var overwritePoint = new Vector3(0,0,0);
+			overwritePoint.x = (float)SystemRandom.NextDouble() * mapSize.x + min.x;
+			overwritePoint.z = (float)SystemRandom.NextDouble() * mapSize.z + min.z;
+			float alphaLength = (float)SystemRandom.NextDouble() * 300f + 200f;
+			alphaLength = alphaLength * alphaLength;
+			byte alpha;
+			for( i0 = 0; i0 < vectorList.Count; ++i0)
+			{
+				var sub = overwritePoint - vectorList[ i0];
+				length = sub.x * sub.x + sub.z * sub.z;
+				if( length < alphaLength)
+				{
+					alpha = (byte)((1f - (length / alphaLength)) * 255.1f);
+				}
+				else
+				{
+					alpha = 0;
+				}
+				addColor.a = alpha;
+				colorList.Add( addColor);
+			}
+
+			GameObject obj = Object.Instantiate( createObj) as GameObject;
+			obj.transform.parent = parent;
+			var meshScript = obj.GetComponent<MeshCreator>();
+			meshScript.PolygonCreate( vectorList, triangleIndexList, uvList, colorList);
+		}
+
 		/**
 		 * 渡された座標が最低値、最大値を超えていないか調べて、超えている場合は補正する
 		 */
