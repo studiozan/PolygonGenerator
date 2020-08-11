@@ -166,7 +166,7 @@ namespace PolygonGenerator
 		}
 
 		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldPoint> pointList, List<PointType> useTypeList,
-			Vector3 min, Vector3 max)
+			Vector3 min, Vector3 max, float ofsetY = 0f)
 		{
 			var vectorList = new List<Vector3>();
 			var uvList = new List<Vector2>();
@@ -261,6 +261,7 @@ namespace PolygonGenerator
 				for( i1 = 0; i1 < 3; ++i1)
 				{
 					addVector[ i1] = trianglePoint[ i0].Point[ i1];
+					addVector[ i1].y = ofsetY;
 				}
 				var clossY = CrossY( addVector[ 0], addVector[ 1], addVector[ 2]);
 				if( clossY < 0)
