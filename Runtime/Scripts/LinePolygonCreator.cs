@@ -14,21 +14,21 @@ namespace PolygonGenerator
 			meshFilter = gameObject?.GetComponent<MeshFilter>();
 		}
 
-		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2, float disconnectionProb = 0)
 		{
 			if (meshFilter != null)
 			{
 				lastInterruptionTime = System.DateTime.Now;
 
-				SetPointsIndex(points);
-				yield return CreateMeshParameter(points, width, uvY1, uvY2);
+				Prepare(points);
+				yield return CreateMeshParameter(points, width, uvY1, uvY2, disconnectionProb);
 				meshFilter.sharedMesh = CreateMesh();
 			}
 		}
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
 		{
-			yield return CreatePolygon(points, width, 0, 1);
+			yield return CreatePolygon(points, width, 0, 1, 0);
 		}
 
 		Mesh CreateMesh()
@@ -45,28 +45,84 @@ namespace PolygonGenerator
 			return mesh;
 		}
 
-		void SetPointsIndex(List<FieldConnectPoint> connectPoints)
+		void Prepare(List<FieldConnectPoint> points)
 		{
-			for (int i0 = 0; i0 < connectPoints.Count; ++i0)
+			connectCountMap.Clear();
+			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
-				connectPoints[i0].Index = i0;
+				FieldConnectPoint point = points[i0];
+				point.Index = i0;
+				if (point.Type == PointType.kGridRoad)
+				{
+					List<FieldConnectPoint> connectPoints = point.ConnectionList;
+					int count = connectPoints.Count;
+					for (int i1 = 0; i1 < connectPoints.Count; ++i1)
+					{
+						if (connectPoints[i1].Type != PointType.kGridRoad)
+						{
+							--count;
+						}
+					}
+					connectCountMap.Add(i0, count);
+				}
 			}
 		}
 
-		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
+		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2, float disconnectionProb)
 		{
 			vertices.Clear();
 			uvs.Clear();
 			indices.Clear();
-			connectedMap.Clear();
 			indicesMap.Clear();
+			judgedCombinationSet.Clear();
+			disconnectCombinationSet.Clear();
 			float halfWidth = width * 0.5f;
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point = points[i0];
-				List<FieldConnectPoint> connectPoints = point.ConnectionList;
+				var connectPoints = new List<FieldConnectPoint>(point.ConnectionList);
 				if (connectPoints.Count != 0)
 				{
+					if (point.Type == PointType.kGridRoad)
+					{
+						var candidates = new List<FieldConnectPoint>();
+						for (int i1 = connectPoints.Count - 1; i1 >= 0; --i1)
+						{
+							FieldConnectPoint connectPoint = connectPoints[i1];
+							var item = new Vector2Int(point.Index, connectPoint.Index);
+							if (connectPoint.Type == PointType.kGridRoad)
+							{
+								if (connectCountMap[connectPoint.Index] >= 2 && judgedCombinationSet.Contains(item) == false)
+								{
+									candidates.Add(connectPoint);
+								}
+								else if (disconnectCombinationSet.Contains(item) != false)
+								{
+									connectPoints.RemoveAt(i1);
+								}
+							}
+						}
+
+						if (candidates.Count >= 2)
+						{
+							int index = random.Next(candidates.Count);
+							FieldConnectPoint candidate = candidates[index];
+							var item1 = new Vector2Int(point.Index, candidate.Index);
+							var item2 = new Vector2Int(candidate.Index, point.Index);
+							if (DetectFromPercent(disconnectionProb) != false)
+							{
+								connectPoints.Remove(candidate);
+								disconnectCombinationSet.Add(item1);
+								disconnectCombinationSet.Add(item2);
+								--connectCountMap[point.Index];
+								--connectCountMap[candidate.Index];
+							}
+
+							judgedCombinationSet.Add(item1);
+							judgedCombinationSet.Add(item2);
+						}
+					}
+
 					if (connectPoints.Count == 1)
 					{
 						FieldConnectPoint p = connectPoints[0];
@@ -297,47 +353,32 @@ namespace PolygonGenerator
 			return isIntersecting;
 		}
 
-		bool IsConnected(int index1, int index2)
+		void AddJudgedCombination(int index1, int index2)
 		{
-			if (connectedMap.TryGetValue(index1, out HashSet<int> connectedSet) != false)
-			{
-				if (connectedSet.Contains(index2) != false)
-				{
-					return true;
-				}
-			}
-
-			return false;
+			judgedCombinationSet.Add(new Vector2Int(index1, index2));
+			judgedCombinationSet.Add(new Vector2Int(index2, index1));
 		}
 
-		void RegisterConnectedMap(int index1, int index2)
+		bool DetectFromPercent(float percent)
 		{
-			if (connectedMap.TryGetValue(index1, out HashSet<int> connectedSet1) != false)
+			int numDigit = 0;
+			string percentString = percent.ToString();
+			if (percentString.IndexOf(".") > 0)
 			{
-				connectedSet1.Add(index2);
-			}
-			else
-			{
-				connectedSet1 = new HashSet<int>();
-				connectedSet1.Add(index2);
-				connectedMap.Add(index1, connectedSet1);
+				numDigit = percentString.Split('.')[1].Length;
 			}
 
-			if (connectedMap.TryGetValue(index2, out HashSet<int> connectedSet2) != false)
-			{
-				connectedSet2.Add(index1);
-			}
-			else
-			{
-				connectedSet2 = new HashSet<int>();
-				connectedSet2.Add(index1);
-				connectedMap.Add(index2, connectedSet2);
-			}
+			int rate = (int)Mathf.Pow(10, numDigit);
+			int maxValue = 100 * rate;
+			int border = (int)(percent * rate);
+
+			return random.Next(0, maxValue) < border;
 		}
 
 
 		public static readonly float kElapsedTimeToInterrupt = 16.7f;
 
+		System.Random random = new System.Random(0);
 		System.DateTime lastInterruptionTime;
 
 		GameObject gameObject;
@@ -346,8 +387,9 @@ namespace PolygonGenerator
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uvs = new List<Vector2>();
 		List<int> indices = new List<int>();
-		Dictionary<int, HashSet<int>> connectedMap = new Dictionary<int, HashSet<int>>();
-
 		Dictionary<int, Dictionary<int, int[]>> indicesMap = new Dictionary<int, Dictionary<int, int[]>>();
+		HashSet<Vector2Int> judgedCombinationSet = new HashSet<Vector2Int>();
+		HashSet<Vector2Int> disconnectCombinationSet = new HashSet<Vector2Int>();
+		Dictionary<int, int> connectCountMap = new Dictionary<int, int>();
 	}
 }
