@@ -20,6 +20,7 @@ namespace PolygonGenerator
 			{
 				lastInterruptionTime = System.DateTime.Now;
 
+				this.width = width;
 				Prepare(points);
 				yield return CreateMeshParameter(points, width, uvY1, uvY2, disconnectionProb);
 				meshFilter.sharedMesh = CreateMesh();
@@ -48,6 +49,7 @@ namespace PolygonGenerator
 		void Prepare(List<FieldConnectPoint> points)
 		{
 			connectCountMap.Clear();
+			widthMap.Clear();
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point = points[i0];
@@ -66,6 +68,28 @@ namespace PolygonGenerator
 					connectCountMap.Add(i0, count);
 				}
 			}
+
+			float[] widthCand = { width, width * 0.75f, width * 0.5f };
+			for (int i0 = 0; i0 < points.Count; ++i0)
+			{
+				FieldConnectPoint point= points[i0];
+				List<FieldConnectPoint> connectPoints = point.ConnectionList;
+				List<float> widthList = point.WidthList;
+				for (int i1 = 0; i1 < connectPoints.Count; ++i1)
+				{
+					FieldConnectPoint connectPoint = connectPoints[i1];
+					var key1 = new Vector2Int(point.Index, connectPoint.Index);
+					var key2 = new Vector2Int(connectPoint.Index, point.Index);
+					float width;
+					if (widthMap.TryGetValue(key1, out width) == false)
+					{
+						width = widthCand[(point.Type != PointType.kRiver ? random.Next(3) : 0)];
+						widthMap.Add(key1, width);
+						widthMap.Add(key2, width);
+					}
+					widthList.Add(width);
+				}
+			}
 		}
 
 		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float width, float uvY1, float uvY2, float disconnectionProb)
@@ -76,10 +100,11 @@ namespace PolygonGenerator
 			indicesMap.Clear();
 			judgedCombinationSet.Clear();
 			disconnectCombinationSet.Clear();
-			float halfWidth = width * 0.5f;
+			// float halfWidth = width * 0.5f;
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point = points[i0];
+				List<float> widthList = point.WidthList;
 				var connectPoints = new List<FieldConnectPoint>(point.ConnectionList);
 				if (connectPoints.Count != 0)
 				{
@@ -128,6 +153,7 @@ namespace PolygonGenerator
 						FieldConnectPoint p = connectPoints[0];
 						Vector3 dir = p.Position - point.Position;
 						dir.Normalize();
+						float halfWidth = widthList[0] * 0.5f;
 						var left = new Vector3(-dir.z, 0, dir.x) * halfWidth + point.Position;
 						var right = new Vector3(dir.z, 0, -dir.x) * halfWidth + point.Position;
 
@@ -179,15 +205,21 @@ namespace PolygonGenerator
 						}
 						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
 						{
-							Vector3 p1 = connectPoints[clockwiseIndices[i1]].Position;
-							Vector3 p2 = connectPoints[clockwiseIndices[(i1 + 1) % clockwiseIndices.Count]].Position;
+							int index1 = clockwiseIndices[i1];
+							int index2 = clockwiseIndices[(i1 + 1) % clockwiseIndices.Count];
+							Vector3 p1 = connectPoints[index1].Position;
+							Vector3 p2 = connectPoints[index2].Position;
 							Vector3 v1 = p1 - origin;
 							v1.Normalize();
 							Vector3 v2 = p2 - origin;
 							v2.Normalize();
 
-							var rightBase = new Vector3(v1.z, 0, -v1.x) * halfWidth;
-							var leftBase = new Vector3(-v2.z, 0, v2.x) * halfWidth;
+							float width1 = widthList[index1];
+							float width2 = widthList[index2];
+							float halfWidth1 = width1 * 0.5f;
+							float halfWidth2 = width2 * 0.5f;
+							var rightBase = new Vector3(v1.z, 0, -v1.x) * halfWidth1;
+							var leftBase = new Vector3(-v2.z, 0, v2.x) * halfWidth2;
 
 							Vector3 r1 = rightBase + origin;
 							Vector3 r2 = rightBase + p1;
@@ -198,6 +230,13 @@ namespace PolygonGenerator
 							if (TryGetIntersection(r1, r2, l1, l2, out intersection) == false)
 							{
 								intersection = r1;
+							}
+
+							Vector3 dist = intersection - point.Position;
+							float maxDist = width * 3;
+							if (dist.sqrMagnitude > maxDist * maxDist)
+							{
+								intersection = (r1 + l1) * 0.5f;
 							}
 
 							vertices.Add(intersection);
@@ -391,5 +430,8 @@ namespace PolygonGenerator
 		HashSet<Vector2Int> judgedCombinationSet = new HashSet<Vector2Int>();
 		HashSet<Vector2Int> disconnectCombinationSet = new HashSet<Vector2Int>();
 		Dictionary<int, int> connectCountMap = new Dictionary<int, int>();
+		Dictionary<Vector2Int, float> widthMap = new Dictionary<Vector2Int, float>();
+
+		float width;
 	}
 }
