@@ -22,14 +22,14 @@ namespace PolygonGenerator
 
 				this.width = width;
 				Prepare(points);
-				yield return CreateMeshParameter(points, width, uvY1, uvY2, disconnectionProb);
+				yield return CoroutineUtility.CoroutineCycle( CreateMeshParameter(points, width, uvY1, uvY2, disconnectionProb));
 				meshFilter.sharedMesh = CreateMesh();
 			}
 		}
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
 		{
-			yield return CreatePolygon(points, width, 0, 1, 0);
+			yield return CoroutineUtility.CoroutineCycle( CreatePolygon(points, width, 0, 1, 0));
 		}
 
 		Mesh CreateMesh()
@@ -69,7 +69,8 @@ namespace PolygonGenerator
 				}
 			}
 
-			float[] widthCand = { width, width * 0.75f, width * 0.5f };
+			/* 道路の幅が狭い方を多く生成させたかったので、ちょっと改造してあります（玉城） */
+			float[] widthCand = { width, width * 0.75f, width * 0.75f, width * 0.5f, width * 0.5f, width * 0.5f, width * 0.5f, width * 0.25f, width * 0.25f, width * 0.25f };
 			for (int i0 = 0; i0 < points.Count; ++i0)
 			{
 				FieldConnectPoint point= points[i0];
@@ -83,7 +84,7 @@ namespace PolygonGenerator
 					float width;
 					if (widthMap.TryGetValue(key1, out width) == false)
 					{
-						width = widthCand[(point.Type != PointType.kRiver ? random.Next(3) : 0)];
+						width = widthCand[(point.Type != PointType.kRiver ? random.Next(10) : 0)];
 						widthMap.Add(key1, width);
 						widthMap.Add(key2, width);
 					}

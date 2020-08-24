@@ -45,11 +45,10 @@ namespace PolygonGenerator
 				BuildingParameter.BuildingType.kBuildingH03,	BuildingParameter.BuildingType.kBuildingH04,
 			};
 
-			var buildableAreas = new List<SurroundedArea>();;
-			yield return DetectBuildableAreas(areas, condition, buildableAreas);
+			var buildableAreas = new List<SurroundedArea>();
+			yield return CoroutineUtility.CoroutineCycle( DetectBuildableAreas(areas, condition, buildableAreas));
 			int count = buildableAreas.Count;
 			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(generationRate));
-
 			for (int i0 = 0; i0 < max; ++i0)
 			{
 				int randomIndex = random.Next(count);
@@ -68,7 +67,6 @@ namespace PolygonGenerator
 					lastInterruptionTime = System.DateTime.Now;
 				}
 			}
-
 			meshCreator.BuildingPolygonCreate(parameters);
 		}
 
