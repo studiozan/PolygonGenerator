@@ -49,7 +49,7 @@ namespace PolygonGenerator
 				var param = new BuildingParameter(buildableAreas[randomIndex].AreaPoints);
 				param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
 				float minHeight, maxHeight;
-				DetectRange(condition.ranges, out minHeight, out maxHeight);
+				DetectRange(condition.heightRanges, out minHeight, out maxHeight);
 				param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
 				parameters.Add(param);
 

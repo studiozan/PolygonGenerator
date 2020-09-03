@@ -17,6 +17,6 @@ namespace PolygonGenerator
 		[SerializeField]
 		public float maxAngle = 360;
 		[SerializeField]
-		public WeightedRange[] ranges = default;
+		public WeightedRange[] heightRanges = default;
 	}
 }
