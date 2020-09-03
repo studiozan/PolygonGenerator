@@ -14,6 +14,11 @@ namespace PolygonGenerator
 			this.meshCreator = meshCreator;
 		}
 
+		//↓高さの設定方を変更したため、削除予定です
+		public void SetHeightRange(float min, float max)
+		{
+		}
+
 		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate)
 		{
 			lastInterruptionTime = System.DateTime.Now;
