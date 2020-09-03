@@ -14,12 +14,6 @@ namespace PolygonGenerator
 			this.meshCreator = meshCreator;
 		}
 
-		public void SetHeightRange(float min, float max)
-		{
-			minHeight = min;
-			maxHeight = max;
-		}
-
 		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate)
 		{
 			lastInterruptionTime = System.DateTime.Now;
@@ -54,6 +48,8 @@ namespace PolygonGenerator
 				int randomIndex = random.Next(count);
 				var param = new BuildingParameter(buildableAreas[randomIndex].AreaPoints);
 				param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
+				float minHeight, maxHeight;
+				DetectRange(condition.ranges, out minHeight, out maxHeight);
 				param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
 				parameters.Add(param);
 
@@ -90,6 +86,37 @@ namespace PolygonGenerator
 				{
 					yield return null;
 					lastInterruptionTime = System.DateTime.Now;
+				}
+			}
+		}
+
+		void DetectRange(WeightedRange[] ranges, out float min, out float max)
+		{
+			min = 0;
+			max = 0;
+
+			float totalWeight = 0;
+			for (int i0 = 0; i0 < ranges.Length; ++i0)
+			{
+				totalWeight += ranges[i0].weight;
+			}
+
+			float border = totalWeight * (float)random.NextDouble();
+
+			for (int i0 = 0; i0 < ranges.Length; ++i0)
+			{
+				WeightedRange range = ranges[i0];
+				float weight = range.weight;
+				if (Mathf.Approximately(weight, 0) == false)
+				{
+					if (border <= weight)
+					{
+						min = range.min;
+						max = range.max;
+						break;
+					}
+
+					border -= weight;
 				}
 			}
 		}
@@ -198,7 +225,5 @@ namespace PolygonGenerator
 		System.Random random;
 		System.DateTime lastInterruptionTime;
 		MeshCreator meshCreator;
-		float minHeight;
-		float maxHeight;
 	}
 }
