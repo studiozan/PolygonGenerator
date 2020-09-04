@@ -14,12 +14,8 @@ namespace PolygonGenerator
 			this.meshCreator = meshCreator;
 		}
 
-		//↓高さの設定方を変更したため、削除予定です
-		public void SetHeightRange(float min, float max)
-		{
-		}
-
-		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate)
+		//第３引数使用していません
+		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate = 1)
 		{
 			lastInterruptionTime = System.DateTime.Now;
 
@@ -47,7 +43,7 @@ namespace PolygonGenerator
 			var buildableAreas = new List<SurroundedArea>();
 			yield return CoroutineUtility.CoroutineCycle( DetectBuildableAreas(areas, condition, buildableAreas));
 			int count = buildableAreas.Count;
-			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(generationRate));
+			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(condition.generationRate));
 			for (int i0 = 0; i0 < max; ++i0)
 			{
 				int randomIndex = random.Next(count);
