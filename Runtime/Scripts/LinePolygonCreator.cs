@@ -45,6 +45,7 @@ namespace PolygonGenerator
 		Mesh CreateMesh()
 		{
 			var mesh = new Mesh();
+			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 			mesh.SetVertices(vertices);
 			mesh.SetUVs(0, uvs);
 			mesh.SetTriangles(indices, 0);
