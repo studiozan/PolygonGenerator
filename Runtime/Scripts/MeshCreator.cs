@@ -82,7 +82,7 @@ namespace PolygonGenerator
 		/**
 		 * 渡されたビルのパラメータリストを元にビルのポリゴンをまとめて生成する
 		 */
-		public void BuildingPolygonCreate( List<BuildingParameter> building_list)
+		public void BuildingPolygonCreate( List<BuildingParameter> building_list, float buildingInterval = 100f)
 		{
 			var vec_list = new List<Vector3>();
 			var tri_list = new List<int>();
@@ -94,8 +94,7 @@ namespace PolygonGenerator
 			Vector3 tmp_vec;
 			var tmp_color = new Color32(255,255,255,0);
 			int i0, i1, i2, tmp_i, tri_count;
-			float height, height_min, itv;
-			itv = 100f;
+			float height, height_min;
 			tri_count = 0;
 
 			for( i0 = 0; i0 < building_list.Count; ++i0)
@@ -121,7 +120,7 @@ namespace PolygonGenerator
 				tmp_v2_list = tmp_buil.GetSideUV();
 				while( height > 0f)
 				{
-					height_min = height - itv;
+					height_min = height - buildingInterval;
 					if( height_min < 0f)
 					{
 						height_min = 0f;
@@ -163,7 +162,7 @@ namespace PolygonGenerator
 						tri_list.Add( tri_count + 2);	tri_list.Add( tri_count + 3);	tri_list.Add( tri_count);
 						tri_count += 4;
 					}
-					height -= itv;
+					height -= buildingInterval;
 				}
 			}
 			

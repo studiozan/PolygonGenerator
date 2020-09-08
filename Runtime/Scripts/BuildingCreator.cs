@@ -15,7 +15,7 @@ namespace PolygonGenerator
 		}
 
 		//第３引数使用していません
-		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float generationRate = 1)
+		public IEnumerator CreateBuildingMesh(List<SurroundedArea> areas, BuildingCondition condition, float buildingInterval = 100f)
 		{
 			lastInterruptionTime = System.DateTime.Now;
 
@@ -64,7 +64,7 @@ namespace PolygonGenerator
 					lastInterruptionTime = System.DateTime.Now;
 				}
 			}
-			meshCreator.BuildingPolygonCreate(parameters);
+			meshCreator.BuildingPolygonCreate(parameters, buildingInterval);
 		}
 
 		IEnumerator DetectBuildableAreas(List<SurroundedArea> areas, BuildingCondition condition, List<SurroundedArea> output)

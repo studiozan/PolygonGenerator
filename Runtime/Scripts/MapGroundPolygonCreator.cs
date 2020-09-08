@@ -68,8 +68,8 @@ namespace PolygonGenerator
 							MinMaxCheck( ref polygonTriangleVector[ i3], min, max);
 							polygonTriangleVector[ i3].y = ofsetY;
 							vectorList.Add( polygonTriangleVector[ i3]);
-							addUv.x = polygonTriangleVector[ i3].x * 0.01f;
-							addUv.y = polygonTriangleVector[ i3].z * 0.01f;
+							addUv.x = polygonTriangleVector[ i3].x * 0.1f;
+							addUv.y = polygonTriangleVector[ i3].z * 0.1f;
 							uvList.Add( addUv);
 						}
 						/*! 対面のテクスチャも作る設定 */
@@ -83,8 +83,8 @@ namespace PolygonGenerator
 							MinMaxCheck( ref polygonTriangleVector[ i3], min, max);
 							polygonTriangleVector[ i3].y = ofsetY;
 							vectorList.Add( polygonTriangleVector[ i3]);
-							addUv.x = polygonTriangleVector[ i3].x * 0.01f;
-							addUv.y = polygonTriangleVector[ i3].z * 0.01f;
+							addUv.x = polygonTriangleVector[ i3].x * 0.1f;
+							addUv.y = polygonTriangleVector[ i3].z * 0.1f;
 							uvList.Add( addUv);
 						}
 					}
@@ -166,7 +166,7 @@ namespace PolygonGenerator
 		}
 
 		public IEnumerator GroundPolygonCreate( Transform parent, List<FieldPoint> pointList, List<PointType> useTypeList,
-			Vector3 min, Vector3 max, float ofsetY = 0f)
+			Vector3 min, Vector3 max, float ofsetY = 0f, float uvPos = -1f)
 		{
 			var vectorList = new List<Vector3>();
 			var uvList = new List<Vector2>();
@@ -256,6 +256,11 @@ namespace PolygonGenerator
 
 			var addUv = Vector2.zero;
 			Vector3[] addVector = new Vector3[ 3];
+			float uv = 0.01f;
+			if( uvPos > 0f)
+			{
+				uv = uvPos;
+			}
 			for( i0 = 0; i0 < trianglePoint.Count; ++i0)
 			{
 				for( i1 = 0; i1 < 3; ++i1)
@@ -273,8 +278,8 @@ namespace PolygonGenerator
 				for( i1 = 0; i1 < 3; ++i1)
 				{
 					vectorList.Add( addVector[ i1]);
-					addUv.x = addVector[ i1].x * 0.001f;
-					addUv.y = addVector[ i1].z * 0.001f;
+					addUv.x = addVector[ i1].x * uv;
+					addUv.y = addVector[ i1].z * uv;
 					uvList.Add( addUv);
 					triangleIndexList.Add( i0 * 3 + i1);
 				}
