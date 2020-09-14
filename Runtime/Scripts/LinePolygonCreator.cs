@@ -14,14 +14,14 @@ namespace PolygonGenerator
 			meshFilter = gameObject?.GetComponent<MeshFilter>();
 		}
 
-		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, WeightedValue[] widthCandidates, float uvY1, float uvY2, float disconnectionProb = 0)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, WeightedValue[] widthCandidates, float uvY1, float uvY2, float disconnectionProb = 0, float decalSize = 1)
 		{
 			if (meshFilter != null)
 			{
 				lastInterruptionTime = System.DateTime.Now;
 				this.widthCandidates = widthCandidates;
 				Prepare(points);
-				yield return CoroutineUtility.CoroutineCycle( CreateMeshParameter(points, uvY1, uvY2, disconnectionProb));
+				yield return CoroutineUtility.CoroutineCycle( CreateMeshParameter(points, uvY1, uvY2, disconnectionProb, decalSize));
 				meshFilter.sharedMesh = CreateMesh();
 			}
 		}
@@ -48,6 +48,7 @@ namespace PolygonGenerator
 			mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 			mesh.SetVertices(vertices);
 			mesh.SetUVs(0, uvs);
+			mesh.SetUVs(1, decalUvs);
 			mesh.SetTriangles(indices, 0);
 
 			mesh.RecalculateNormals();
@@ -112,10 +113,11 @@ namespace PolygonGenerator
 			}
 		}
 
-		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float uvY1, float uvY2, float disconnectionProb)
+		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float uvY1, float uvY2, float disconnectionProb, float decalSize)
 		{
 			vertices.Clear();
 			uvs.Clear();
+			decalUvs.Clear();
 			indices.Clear();
 			indicesMap.Clear();
 			judgedCombinationSet.Clear();
@@ -183,6 +185,8 @@ namespace PolygonGenerator
 						uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 						vertices.Add(right);
 						uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
+						decalUvs.Add(new Vector2(left.x / decalSize, left.z / decalSize));
+						decalUvs.Add(new Vector2(right.x / decalSize, right.z / decalSize));
 
 						Dictionary<int, int[]> map;
 						if (indicesMap.TryGetValue(point.Index, out map) == false)
@@ -196,13 +200,18 @@ namespace PolygonGenerator
 						{
 							if (map.TryGetValue(point.Index, out int[] indexLR) != false)
 							{
-								vertices.Add(vertices[indexLR[1]]);
-								vertices.Add(vertices[indexLR[0]]);
+								Vector3 vl = vertices[indexLR[1]];
+								Vector3 vr = vertices[indexLR[0]];
+								vertices.Add(vl);
+								vertices.Add(vr);
 
 								uvs[leftIndex] = new Vector2(0, uvY1);
 								uvs[rightIndex] = new Vector2(0, uvY2);
 								uvs.Add(new Vector2(1, uvY1));
 								uvs.Add(new Vector2(1, uvY2));
+
+								decalUvs.Add(new Vector2(vl.x / decalSize, vl.z / decalSize));
+								decalUvs.Add(new Vector2(vr.x / decalSize, vr.z / decalSize));
 
 								indices.Add(leftIndex);
 								indices.Add(leftIndex + 2);
@@ -222,6 +231,7 @@ namespace PolygonGenerator
 						{
 							vertices.Add(origin);
 							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
+							decalUvs.Add(new Vector2(origin.x / decalSize, origin.z / decalSize));
 						}
 						for (int i1 = 0; i1 < clockwiseIndices.Count; ++i1)
 						{
@@ -263,6 +273,8 @@ namespace PolygonGenerator
 							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
 							vertices.Add(intersection);
 							uvs.Add(new Vector2(0.5f, (uvY1 + uvY2) * 0.5f));
+							decalUvs.Add(new Vector2(intersection.x / decalSize, intersection.z / decalSize));
+							decalUvs.Add(new Vector2(intersection.x / decalSize, intersection.z / decalSize));
 
 							if (connectPoints.Count >= 3)
 							{
@@ -469,6 +481,7 @@ namespace PolygonGenerator
 
 		List<Vector3> vertices = new List<Vector3>();
 		List<Vector2> uvs = new List<Vector2>();
+		List<Vector2> decalUvs = new List<Vector2>();
 		List<int> indices = new List<int>();
 		Dictionary<int, Dictionary<int, int[]>> indicesMap = new Dictionary<int, Dictionary<int, int[]>>();
 		HashSet<Vector2Int> judgedCombinationSet = new HashSet<Vector2Int>();
