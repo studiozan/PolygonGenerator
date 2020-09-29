@@ -21,15 +21,20 @@ namespace PolygonGenerator
 				lastInterruptionTime = System.DateTime.Now;
 				this.widthCandidates = widthCandidates;
 				Prepare(points);
-				yield return CoroutineUtility.CoroutineCycle( CreateMeshParameter(points, uvY1, uvY2, disconnectionProb, decalSize));
+				yield return CoroutineUtility.CoroutineCycle( CreateMeshParameter(points, uvY1, uvY2, decalSize));
 				meshFilter.sharedMesh = CreateMesh();
 			}
 		}
 
-		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2, float disconnectionProb = 0)
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, LinePolygonParameter parameter)
+		{
+			yield return CoroutineUtility.CoroutineCycle(CreatePolygon(points, parameter.WidthCandidates, parameter.UvY1, parameter.UvY2, 0, parameter.DecalSize));
+		}
+
+		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)
 		{
 			var candidates = new WeightedValue[] { new WeightedValue { value = width, weight = 1 } };
-			yield return CoroutineUtility.CoroutineCycle(CreatePolygon(points, candidates, uvY1, uvY2, disconnectionProb));
+			yield return CoroutineUtility.CoroutineCycle(CreatePolygon(points, candidates, uvY1, uvY2));
 		}
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, WeightedValue[] widthCandidates)
@@ -39,7 +44,7 @@ namespace PolygonGenerator
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width)
 		{
-			yield return CoroutineUtility.CoroutineCycle( CreatePolygon(points, width, 0, 1, 0));
+			yield return CoroutineUtility.CoroutineCycle( CreatePolygon(points, width, 0, 1));
 		}
 
 		Mesh CreateMesh()
@@ -96,7 +101,7 @@ namespace PolygonGenerator
 				FieldConnectPoint point= points[i0];
 				List<FieldConnectPoint> connectPoints = point.ConnectionList;
 				List<float> widthList = point.WidthList;
-				for (int i1 = 0; i1 < connectPoints.Count; ++i1)
+				for (int i1 = connectPoints.Count - 1; i1 >= 0; --i1)
 				{
 					FieldConnectPoint connectPoint = connectPoints[i1];
 					var key1 = new Vector2Int(point.Index, connectPoint.Index);
@@ -108,12 +113,21 @@ namespace PolygonGenerator
 						widthMap.Add(key1, width);
 						widthMap.Add(key2, width);
 					}
-					widthList.Add(width);
+
+					if (Mathf.Approximately(width, 0) != false)
+					{
+						connectPoints.RemoveAt(i1);
+					}
+					else
+					{
+						widthList.Add(width);
+					}
 				}
+				widthList.Reverse();
 			}
 		}
 
-		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float uvY1, float uvY2, float disconnectionProb, float decalSize)
+		IEnumerator CreateMeshParameter(List<FieldConnectPoint> points, float uvY1, float uvY2, float decalSize)
 		{
 			vertices.Clear();
 			uvs.Clear();
@@ -130,46 +144,6 @@ namespace PolygonGenerator
 				var connectPoints = new List<FieldConnectPoint>(point.ConnectionList);
 				if (connectPoints.Count != 0)
 				{
-					if (point.Type == PointType.kGridRoad)
-					{
-						var candidates = new List<FieldConnectPoint>();
-						for (int i1 = connectPoints.Count - 1; i1 >= 0; --i1)
-						{
-							FieldConnectPoint connectPoint = connectPoints[i1];
-							var item = new Vector2Int(point.Index, connectPoint.Index);
-							if (connectPoint.Type == PointType.kGridRoad)
-							{
-								if (connectCountMap[connectPoint.Index] >= 2 && judgedCombinationSet.Contains(item) == false)
-								{
-									candidates.Add(connectPoint);
-								}
-								else if (disconnectCombinationSet.Contains(item) != false)
-								{
-									connectPoints.RemoveAt(i1);
-								}
-							}
-						}
-
-						if (candidates.Count >= 2)
-						{
-							int index = random.Next(candidates.Count);
-							FieldConnectPoint candidate = candidates[index];
-							var item1 = new Vector2Int(point.Index, candidate.Index);
-							var item2 = new Vector2Int(candidate.Index, point.Index);
-							if (DetectFromPercent(disconnectionProb) != false)
-							{
-								connectPoints.Remove(candidate);
-								disconnectCombinationSet.Add(item1);
-								disconnectCombinationSet.Add(item2);
-								--connectCountMap[point.Index];
-								--connectCountMap[candidate.Index];
-							}
-
-							judgedCombinationSet.Add(item1);
-							judgedCombinationSet.Add(item2);
-						}
-					}
-
 					if (connectPoints.Count == 1)
 					{
 						FieldConnectPoint p = connectPoints[0];
