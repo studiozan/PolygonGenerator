@@ -28,7 +28,7 @@ namespace PolygonGenerator
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, LinePolygonParameter parameter)
 		{
-			yield return CoroutineUtility.CoroutineCycle(CreatePolygon(points, parameter.WidthCandidates, parameter.UvY1, parameter.UvY2, 0, parameter.DecalSize));
+			yield return CoroutineUtility.CoroutineCycle(CreatePolygon(points, parameter.widthCandidates, parameter.uvY1, parameter.uvY2, 0, parameter.decalSize));
 		}
 
 		public IEnumerator CreatePolygon(List<FieldConnectPoint> points, float width, float uvY1, float uvY2)

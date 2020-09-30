@@ -5,11 +5,16 @@ using FieldGenerator;
 
 namespace PolygonGenerator
 {
+	[System.Serializable]
 	public class LinePolygonParameter
 	{
-		public WeightedValue[] WidthCandidates { get; set; }
-		public float UvY1 { get; set; } = 0;
-		public float UvY2 { get; set; } = 1;
-		public float DecalSize { get; set; } = 1;
+		[SerializeField]
+		public WeightedValue[] widthCandidates = default;
+		[SerializeField]
+		public float uvY1 = 0;
+		[SerializeField]
+		public float uvY2 = 1;
+		[SerializeField]
+		public float decalSize = 1;
 	}
 }
