@@ -132,14 +132,14 @@ namespace PolygonGenerator
 			}
 			else
 			{
-				Vector3 v1 = areaPoints[1] - areaPoints[0];
-				Vector3 v2 = areaPoints[2] - areaPoints[1];
-				Vector3 v3 = areaPoints[3] - areaPoints[2];
-				Vector3 v4 = areaPoints[0] - areaPoints[3];
+				Vector3 side1 = areaPoints[1] - areaPoints[0];
+				Vector3 side2 = areaPoints[2] - areaPoints[1];
+				Vector3 side3 = areaPoints[3] - areaPoints[2];
+				Vector3 side4 = areaPoints[0] - areaPoints[3];
 
-				float s = (Mathf.Abs(Vector3.Cross(v1, v2).y) + Mathf.Abs(Vector3.Cross(v3, v4).y)) * 0.5f;
+				float area = (Mathf.Abs(Vector3.Cross(side1, side2).y) + Mathf.Abs(Vector3.Cross(side3, side4).y)) * 0.5f;
 				float sideRatio = condition.sideRatio;
-				if (s < condition.minAreaSize || (CalcRatio(v1, v3) >= sideRatio && CalcRatio(v2, v4) >= sideRatio))
+				if (area < condition.minAreaSize || (CalcRatio(side1, side3) >= sideRatio && CalcRatio(side2, side4) >= sideRatio))
 				{
 					canBuild = false;
 				}
@@ -147,12 +147,12 @@ namespace PolygonGenerator
 				{
 					for (int i0 = 0; i0 < areaPoints.Count; ++i0)
 					{
-						Vector3 p0 = areaPoints[i0];
-						Vector3 p1 = areaPoints[(i0 + 1) % areaPoints.Count];
-						Vector3 p2 = areaPoints[(i0 + areaPoints.Count - 1) % areaPoints.Count];
+						Vector3 pos0 = areaPoints[i0];
+						Vector3 pos1 = areaPoints[(i0 + 1) % areaPoints.Count];
+						Vector3 pos2 = areaPoints[(i0 + areaPoints.Count - 1) % areaPoints.Count];
 
-						Vector3 dir1 = p1 - p0;
-						Vector3 dir2 = p2 - p0;
+						Vector3 dir1 = pos1 - pos0;
+						Vector3 dir2 = pos2 - pos0;
 
 						float angle = -Vector2.SignedAngle(new Vector2(dir1.x, dir1.z), new Vector2(dir2.x, dir2.z));
 						angle = angle < 0 ? 360 + angle : angle;
@@ -212,12 +212,12 @@ namespace PolygonGenerator
 		{
 			float ratio = Mathf.Infinity;
 
-			float m1 = v1.magnitude;
-			float m2 = v2.magnitude;
+			float length1 = v1.magnitude;
+			float length2 = v2.magnitude;
 
-			if (Mathf.Approximately(m1, 0) == false && Mathf.Approximately(m2, 0) == false)
+			if (Mathf.Approximately(length1, 0) == false && Mathf.Approximately(length2, 0) == false)
 			{
-				ratio = m1 > m2 ? m1 / m2 : m2 / m1;
+				ratio = length1 > length2 ? length1 / length2 : length2 / length1;
 			}
 
 			return ratio;
