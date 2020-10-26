@@ -174,18 +174,18 @@ namespace PolygonGenerator
 						{
 							if (map.TryGetValue(point.Index, out int[] indexLR) != false)
 							{
-								Vector3 vl = vertices[indexLR[1]];
-								Vector3 vr = vertices[indexLR[0]];
-								vertices.Add(vl);
-								vertices.Add(vr);
+								Vector3 vertL = vertices[indexLR[1]];
+								Vector3 vertR = vertices[indexLR[0]];
+								vertices.Add(vertL);
+								vertices.Add(vertR);
 
 								uvs[leftIndex] = new Vector2(0, uvY1);
 								uvs[rightIndex] = new Vector2(0, uvY2);
 								uvs.Add(new Vector2(1, uvY1));
 								uvs.Add(new Vector2(1, uvY2));
 
-								decalUvs.Add(new Vector2(vl.x / decalSize, vl.z / decalSize));
-								decalUvs.Add(new Vector2(vr.x / decalSize, vr.z / decalSize));
+								decalUvs.Add(new Vector2(vertL.x / decalSize, vertL.z / decalSize));
+								decalUvs.Add(new Vector2(vertR.x / decalSize, vertR.z / decalSize));
 
 								indices.Add(leftIndex);
 								indices.Add(leftIndex + 2);
@@ -211,36 +211,36 @@ namespace PolygonGenerator
 						{
 							int index1 = clockwiseIndices[i1];
 							int index2 = clockwiseIndices[(i1 + 1) % clockwiseIndices.Count];
-							Vector3 p1 = connectPoints[index1].Position;
-							Vector3 p2 = connectPoints[index2].Position;
-							Vector3 v1 = p1 - origin;
-							v1.Normalize();
-							Vector3 v2 = p2 - origin;
-							v2.Normalize();
+							Vector3 pos1 = connectPoints[index1].Position;
+							Vector3 pos2 = connectPoints[index2].Position;
+							Vector3 dir1 = pos1 - origin;
+							dir1.Normalize();
+							Vector3 dir2 = pos2 - origin;
+							dir2.Normalize();
 
 							float width1 = widthList[index1];
 							float width2 = widthList[index2];
 							float halfWidth1 = width1 * 0.5f;
 							float halfWidth2 = width2 * 0.5f;
-							var rightBase = new Vector3(v1.z, 0, -v1.x) * halfWidth1;
-							var leftBase = new Vector3(-v2.z, 0, v2.x) * halfWidth2;
+							var rightBase = new Vector3(dir1.z, 0, -dir1.x) * halfWidth1;
+							var leftBase = new Vector3(-dir2.z, 0, dir2.x) * halfWidth2;
 
-							Vector3 r1 = rightBase + origin;
-							Vector3 r2 = rightBase + p1;
-							Vector3 l1 = leftBase + origin;
-							Vector3 l2 = leftBase + p2;
+							Vector3 posR1 = rightBase + origin;
+							Vector3 posR2 = rightBase + pos1;
+							Vector3 posL1 = leftBase + origin;
+							Vector3 posL2 = leftBase + pos2;
 
 							var intersection = new Vector3();
-							if (TryGetIntersection(r1, r2, l1, l2, out intersection) == false)
+							if (TryGetIntersection(posR1, posR2, posL1, posL2, out intersection) == false)
 							{
-								intersection = r1;
+								intersection = posR1;
 							}
 
 							Vector3 dist = intersection - point.Position;
 							float maxDist = maxWidth * 3;
 							if (dist.sqrMagnitude > maxDist * maxDist)
 							{
-								intersection = (r1 + l1) * 0.5f;
+								intersection = (posR1 + posL1) * 0.5f;
 							}
 
 							vertices.Add(intersection);
@@ -329,13 +329,13 @@ namespace PolygonGenerator
 			{
 				if (i0 != baseIndex)
 				{
-					Vector3 v = points[i0].Position - origin.Position;
-					v.Normalize();
-					float cross1 = Vector3.Cross(baseVec, v).y;
+					Vector3 dir = points[i0].Position - origin.Position;
+					dir.Normalize();
+					float cross1 = Vector3.Cross(baseVec, dir).y;
 					//右
 					if (cross1 >= 0)
 					{
-						float cross2 = Vector3.Cross(right, v).y;
+						float cross2 = Vector3.Cross(right, dir).y;
 						if (cross2 <= 0)
 						{
 							rightUp.Add(new KeyValuePair<int, float>(i0, cross2));
@@ -348,7 +348,7 @@ namespace PolygonGenerator
 					//左
 					else
 					{
-						float cross2 = Vector3.Cross(left, v).y;
+						float cross2 = Vector3.Cross(left, dir).y;
 						if (cross2 <= 0)
 						{
 							leftDown.Add(new KeyValuePair<int, float>(i0, cross2));
@@ -375,24 +375,24 @@ namespace PolygonGenerator
 			return clockwise;
 		}
 
-		bool TryGetIntersection(Vector3 s1, Vector3 e1, Vector3 s2, Vector3 e2, out Vector3 intersection)
+		bool TryGetIntersection(Vector3 startPos1, Vector3 endPos1, Vector3 startPos2, Vector3 endPos2, out Vector3 intersection)
 		{
 			bool isIntersecting = false;
 			intersection = Vector3.zero;
 
-			Vector3 v1 = e1 - s1;
-			Vector3 v2 = s2 - s1;
-			Vector3 v3 = s1 - e2;
-			Vector3 v4 = e2 - s2;
+			Vector3 dir1 = endPos1 - startPos1;
+			Vector3 dir2 = startPos2 - startPos1;
+			Vector3 dir3 = startPos1 - endPos2;
+			Vector3 dir4 = endPos2 - startPos2;
 
-			float area1 = Vector3.Cross(v1, v2).y * 0.5f;
-			float area2 = Vector3.Cross(v1, v3).y * 0.5f;
+			float area1 = Vector3.Cross(dir1, dir2).y * 0.5f;
+			float area2 = Vector3.Cross(dir1, dir3).y * 0.5f;
 			float area = area1 + area2;
 
 			if (Mathf.Approximately(area, 0) == false)
 			{
 				isIntersecting = true;
-				intersection = s2 + v4 * area1 / area;
+				intersection = startPos2 + dir4 * area1 / area;
 			}
 
 			return isIntersecting;
