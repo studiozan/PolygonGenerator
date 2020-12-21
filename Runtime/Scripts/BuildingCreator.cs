@@ -44,15 +44,55 @@ namespace PolygonGenerator
 			yield return CoroutineUtility.CoroutineCycle( DetectBuildableAreas(areas, condition, buildableAreas));
 			int count = buildableAreas.Count;
 			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(condition.generationRate));
+			int sqrtBuildingCount = 3;
+			float buildingRatio = 0.25f;
+			float spacingRatio = (1.0f - buildingRatio * sqrtBuildingCount) / (float)(sqrtBuildingCount - 1);
 			for (int i0 = 0; i0 < max; ++i0)
 			{
 				int randomIndex = random.Next(count);
-				var param = new BuildingParameter(buildableAreas[randomIndex].AreaPoints);
-				param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
+				IReadOnlyList<Vector3> areaPoints = buildableAreas[randomIndex].AreaPoints;
+
 				float minHeight, maxHeight;
 				DetectRange(condition.heightRanges, out minHeight, out maxHeight);
-				param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
-				parameters.Add(param);
+				int buildingCountInArea = 0;
+				// var demolishCounts = new int[] { 0, 3, 5 };
+				// int demolishCount = demolishCounts[ random.Next(demolishCounts.Length)];
+				int demolishCount = 0;
+				var buildingNumbers = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+				var demolishIndices = new HashSet<int>();
+				for( int i1 = 0; i1 < demolishCount; ++i1)
+				{
+					int buildingRandomIndex = random.Next(buildingNumbers.Count);
+					demolishIndices.Add(buildingNumbers[buildingRandomIndex]);
+					buildingNumbers.RemoveAt(buildingRandomIndex);
+				}
+				for (int row = 0; row < sqrtBuildingCount; ++row)
+				{
+					Vector3 top1 = Vector3.Lerp(areaPoints[0], areaPoints[3], (buildingRatio + spacingRatio) * row);
+					Vector3 top2 = Vector3.Lerp(areaPoints[1], areaPoints[2], (buildingRatio + spacingRatio) * row);
+					Vector3 bottom1 = Vector3.Lerp(areaPoints[0], areaPoints[3], (buildingRatio + spacingRatio) * row + buildingRatio);
+					Vector3 bottom2 = Vector3.Lerp(areaPoints[1], areaPoints[2], (buildingRatio + spacingRatio) * row + buildingRatio);
+
+					for (int column = 0; column < sqrtBuildingCount; ++column)
+					{
+						++buildingCountInArea;
+
+						if (demolishIndices.Contains(buildingCountInArea) == false)
+						{
+							Vector3 leftTop = Vector3.Lerp(top1, top2, (buildingRatio + spacingRatio) * column);
+							Vector3 rightTop = Vector3.Lerp(top1, top2, (buildingRatio + spacingRatio) * column + buildingRatio);
+							Vector3 rightBottom = Vector3.Lerp(bottom1, bottom2, (buildingRatio + spacingRatio) * column + buildingRatio);
+							Vector3 leftBottom = Vector3.Lerp(bottom1, bottom2, (buildingRatio + spacingRatio) * column);
+
+							var buildingPoints = new List<Vector3>() { leftTop, rightTop, rightBottom, leftBottom };
+
+							var param = new BuildingParameter(buildingPoints);
+							param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
+							param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
+							parameters.Add(param);
+						}
+					}
+				}
 
 				--count;
 				buildableAreas[randomIndex] = buildableAreas[count];
