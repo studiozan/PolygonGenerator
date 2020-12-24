@@ -10,8 +10,13 @@ namespace PolygonGenerator
 	{
 		public void Initialize(MeshCreator meshCreator, int seed = 0)
 		{
+			this.Initialize(new[] { meshCreator }, seed);
+		}
+
+		public void Initialize(IReadOnlyList<MeshCreator> meshCreators, int seed = 0)
+		{
 			random = new System.Random(seed);
-			this.meshCreator = meshCreator;
+			this.meshCreators = meshCreators;
 		}
 
 		//第３引数使用していません
@@ -19,7 +24,7 @@ namespace PolygonGenerator
 		{
 			lastInterruptionTime = System.DateTime.Now;
 
-			var parameters = new List<BuildingParameter>();
+			var allBuildingParameters = new List<BuildingParameter>();
 			var types = new BuildingParameter.BuildingType[]
 			{
 				BuildingParameter.BuildingType.kBuildingA01,	BuildingParameter.BuildingType.kBuildingA02,
@@ -42,15 +47,24 @@ namespace PolygonGenerator
 
 			var buildableAreas = new List<SurroundedArea>();
 			yield return CoroutineUtility.CoroutineCycle( DetectBuildableAreas(areas, condition, buildableAreas));
-			int count = buildableAreas.Count;
-			int max = Mathf.RoundToInt((float)count * Mathf.Clamp01(condition.generationRate));
+			int max = Mathf.RoundToInt((float)buildableAreas.Count * Mathf.Clamp01(condition.generationRate));
+			var randomAreas = new List<SurroundedArea>();
+			for (int i0 = 0; i0 < max; ++i0)
+			{
+				int randomIndex = random.Next(buildableAreas.Count);
+				randomAreas.Add(buildableAreas[randomIndex]);
+				int lastIndex = buildableAreas.Count - 1;
+				buildableAreas[randomIndex] = buildableAreas[lastIndex];
+				buildableAreas.RemoveAt(lastIndex);
+			}
+			randomAreas.Sort((a, b) => a.GetCenter().x.CompareTo(b.GetCenter().x));
+			randomAreas.Sort((a, b) => a.GetCenter().z.CompareTo(b.GetCenter().z));
 			int sqrtBuildingCount = 3;
 			float buildingRatio = 0.25f;
 			float spacingRatio = (1.0f - buildingRatio * sqrtBuildingCount) / (float)(sqrtBuildingCount - 1);
-			for (int i0 = 0; i0 < max; ++i0)
+			for (int i0 = 0; i0 < randomAreas.Count; ++i0)
 			{
-				int randomIndex = random.Next(count);
-				IReadOnlyList<Vector3> areaPoints = buildableAreas[randomIndex].AreaPoints;
+				IReadOnlyList<Vector3> areaPoints = randomAreas[i0].AreaPoints;
 
 				float minHeight, maxHeight;
 				DetectRange(condition.heightRanges, out minHeight, out maxHeight);
@@ -89,14 +103,10 @@ namespace PolygonGenerator
 							var param = new BuildingParameter(buildingPoints);
 							param.SetBuildingType(types[random.Next(types.Length)], random.Next(4));
 							param.SetBuildingHeight(Mathf.Lerp(minHeight, maxHeight, (float)random.NextDouble()));
-							parameters.Add(param);
+							allBuildingParameters.Add(param);
 						}
 					}
 				}
-
-				--count;
-				buildableAreas[randomIndex] = buildableAreas[count];
-				buildableAreas.RemoveAt(count);
 
 				if (System.DateTime.Now.Subtract(lastInterruptionTime).TotalMilliseconds >= LinePolygonCreator.kElapsedTimeToInterrupt)
 				{
@@ -104,7 +114,21 @@ namespace PolygonGenerator
 					lastInterruptionTime = System.DateTime.Now;
 				}
 			}
-			meshCreator.BuildingPolygonCreate(parameters, buildingInterval);
+
+			int totalBuildingCount = allBuildingParameters.Count;
+			int buildingCountPerMesh = totalBuildingCount / meshCreators.Count;
+			int surplus = totalBuildingCount % meshCreators.Count;
+			for (int i0 = 0; i0 < meshCreators.Count; ++i0)
+			{
+				int startIndex = buildingCountPerMesh * i0;
+				int buildingCount = buildingCountPerMesh + (i0 == meshCreators.Count - 1 ? surplus : 0);
+				List<BuildingParameter> parameters = allBuildingParameters.GetRange(startIndex, buildingCount);
+				if (condition.enabledSort != false)
+				{
+					parameters.Sort((a, b) => (int)a.TextureType - (int)b.TextureType);
+				}
+				meshCreators[i0].BuildingPolygonCreate(parameters, buildingInterval);
+			}
 		}
 
 		IEnumerator DetectBuildableAreas(List<SurroundedArea> areas, BuildingCondition condition, List<SurroundedArea> output)
@@ -265,6 +289,6 @@ namespace PolygonGenerator
 
 		System.Random random;
 		System.DateTime lastInterruptionTime;
-		MeshCreator meshCreator;
+		IReadOnlyList<MeshCreator> meshCreators;
 	}
 }

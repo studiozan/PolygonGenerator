@@ -20,5 +20,7 @@ namespace PolygonGenerator
 		public float generationRate = 1;
 		[SerializeField]
 		public WeightedRange[] heightRanges = default;
+		[SerializeField]
+		public bool enabledSort = true;
 	}
 }
